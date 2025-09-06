@@ -30,7 +30,7 @@ export default function HeroHeader(){
           />
         )}
         {/* Blur / tint overlays */}
-        <div className="absolute inset-0 backdrop-blur-md" />
+        <div className="absolute inset-0 backdrop-blur-sm" />
         <div className="absolute inset-0 bg-brand-green/25 dark:bg-brand-pine/50 mix-blend-multiply" />
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_25%,rgba(255,255,255,0.55),transparent_70%)] dark:bg-[radial-gradient(circle_at_30%_25%,rgba(255,255,255,0.10),transparent_70%)]" />
       </div>
