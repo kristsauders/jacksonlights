@@ -22,7 +22,6 @@ export default function VideoGallery() {
               loading="lazy"
             />
           </div>
-          <p className="text-xs sm:text-sm font-medium text-neutral-700 dark:text-neutral-300">{v.title}</p>
         </div>
       ))}
     </div>

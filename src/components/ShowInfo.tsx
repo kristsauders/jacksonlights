@@ -78,15 +78,15 @@ function PixelChainDemo(){
           }
         `}</style>
       </div>
-      <p className="mt-3 text-center text-xs md:text-sm text-neutral-600 dark:text-neutral-200 leading-relaxed max-w-2xl mx-auto px-4">Each pixel chip latches its 24 bits then forwards the remaining stream. Staggered pulses show a single frame&apos;s color data rippling from the first pixel all the way to the last without a second wave starting early.</p>
+      <p className="mt-3 text-center text-xs md:text-sm text-neutral-600 dark:text-neutral-200 leading-relaxed max-w-2xl mx-auto px-4">Each pixel chip latches its 24 bits then forwards the remaining stream.</p>
     </div>
   );
 }
 
 function NetworkDiagram(){
   return (
-    <div className="relative">
-      <svg className="w-full max-w-4xl mx-auto" viewBox="0 0 980 320" role="img" aria-label="Network diagram: PC, switch, controllers, wired props, wireless Twinkly mesh">
+    <div className="relative overflow-x-auto">
+      <svg className="w-full max-w-4xl mx-auto" viewBox="0 0 980 320" role="img" aria-label="Network diagram: PC, switch, controllers, wired props, wireless Twinkly mesh" preserveAspectRatio="xMidYMid meet">
         <defs>
           <linearGradient id="wire" x1="0" x2="1" y1="0" y2="0">
             <stop offset="0%" stopColor="#0F3B2E" />
@@ -112,26 +112,29 @@ function NetworkDiagram(){
         {/* Wired Prop Cluster */}
         <rect x="620" y="30" width="300" height="140" rx="20" fill="#181818" stroke="#444" strokeWidth="2" />
         <text x="770" y="55" textAnchor="middle" fontSize="12" fill="#fff">Wired Pixel Props</text>
-        <text x="640" y="80" fontSize="10" fill="#E2C044">Mega Tree</text>
-        <text x="640" y="100" fontSize="10" fill="#E2C044">Arches</text>
-        <text x="720" y="100" fontSize="10" fill="#E2C044">Matrix</text>
-        <text x="800" y="100" fontSize="10" fill="#E2C044">Windows</text>
-        <text x="880" y="100" fontSize="10" fill="#E2C044">Star</text>
+  {/* Evenly spaced wired prop labels */}
+  <text x="650" y="95" fontSize="10" fill="#E2C044">Mega Tree</text>
+  <text x="725" y="95" fontSize="10" fill="#E2C044">Arches</text>
+  <text x="800" y="95" fontSize="10" fill="#E2C044">Matrix</text>
+  <text x="865" y="95" fontSize="10" fill="#E2C044">Windows</text>
         {/* Wireless Mesh Cluster (Twinkly) */}
         <rect x="620" y="180" width="300" height="110" rx="20" fill="#181818" stroke="#444" strokeWidth="2" />
-        <text x="770" y="205" textAnchor="middle" fontSize="12" fill="#fff">Wireless Mesh (Twinkly 24V)</text>
-        <text x="640" y="230" fontSize="10" fill="#E2C044">Strings</text>
-        <text x="720" y="230" fontSize="10" fill="#E2C044">Icicles</text>
-        <text x="800" y="230" fontSize="10" fill="#E2C044">Net</text>
-        <text x="860" y="230" fontSize="10" fill="#E2C044">Window Frame</text>
+  {/* Split long wireless mesh label into two lines to avoid overflow */}
+        <text x="770" y="200" textAnchor="middle" fontSize="11" fill="#fff">Wireless Mesh</text>
+        <text x="770" y="214" textAnchor="middle" fontSize="10" fill="#E2C044">Twinkly 24V</text>
+  {/* Increased vertical gap before wireless prop labels */}
+  <text x="640" y="248" fontSize="10" fill="#E2C044">Strings</text>
+  <text x="700" y="248" fontSize="10" fill="#E2C044">Curtains</text>
+  <text x="830" y="246" fontSize="9" fill="#E2C044">Snowflakes</text>
         {/* Wired links */}
         <path d="M160 170 H210" stroke="url(#wire)" strokeWidth="8" strokeLinecap="round" />
         <path d="M330 170 L410 100" stroke="url(#wire)" strokeWidth="6" strokeLinecap="round" />
         <path d="M330 170 L410 240" stroke="url(#wire)" strokeWidth="6" strokeLinecap="round" />
         <path d="M560 100 H620" stroke="url(#wire)" strokeWidth="6" strokeLinecap="round" />
-        <path d="M560 240 H620" stroke="url(#wire)" strokeWidth="6" strokeLinecap="round" />
+  <path d="M560 240 V100 H620" stroke="url(#wire)" strokeWidth="6" strokeLinecap="round" />
   {/* Direct wireless from PC (bypass switch) to mesh cluster – routed around controllers */}
-  <path d="M160 170 C 260 40, 420 10, 560 40 S 860 140, 770 235" stroke="#E2C044" strokeWidth="3" className="dash" fill="none" />
+  {/* Direct wireless from PC (bypass switch) to mesh cluster – bottom arc route */}
+  <path d="M160 170 C 260 300, 420 310, 560 300 S 860 260, 770 235" stroke="#E2C044" strokeWidth="3" className="dash" fill="none" />
         {/* Packet animations: PC -> Falcon -> Wired props */}
         {Array.from({length:5}).map((_,i)=>(
           <circle key={'wf'+i} r="6" fill="url(#pkt)">
@@ -141,24 +144,64 @@ function NetworkDiagram(){
         {/* Packet animations: PC -> Kulp -> Wired props */}
         {Array.from({length:5}).map((_,i)=>(
           <circle key={'wk'+i} r="6" fill="url(#pkt)">
-            <animateMotion dur="6s" repeatCount="indefinite" path="M160 170 H210 L330 170 L410 240 H560 H620" begin={`${i*0.9+0.45}s`} />
+            <animateMotion dur="6s" repeatCount="indefinite" path="M160 170 H210 L330 170 L410 240 H560 V100 H620" begin={`${i*0.9+0.45}s`} />
           </circle>
         ))}
         {/* Packet animations: PC direct wireless arc to mesh */}
         {Array.from({length:6}).map((_,i)=>(
           <circle key={'wm'+i} r="5" fill="url(#pkt)">
-            <animateMotion dur="7s" repeatCount="indefinite" path="M160 170 C 260 40, 420 10, 560 40 S 860 140, 770 235" begin={`${i*1}s`} />
+            <animateMotion dur="7s" repeatCount="indefinite" path="M160 170 C 260 300, 420 310, 560 300 S 860 260, 770 235" begin={`${i*1}s`} />
           </circle>
         ))}
-        {/* Legend */}
-        <rect x="20" y="25" width="170" height="84" rx="10" fill="#121212" stroke="#333" strokeWidth="1" />
-        <text x="105" y="45" textAnchor="middle" fontSize="11" fill="#fff">Legend</text>
-        <line x1="40" y1="58" x2="90" y2="58" stroke="url(#wire)" strokeWidth="6" />
-        <text x="95" y="61" fontSize="9" fill="#fff">Wired Data (DDP/E1.31)</text>
-        <line x1="40" y1="76" x2="90" y2="76" stroke="#E2C044" strokeWidth="3" strokeDasharray="6 6" />
-        <text x="95" y="79" fontSize="9" fill="#fff">Wireless Mesh Sync</text>
       </svg>
       <p className="mt-2 text-center text-xs text-neutral-500">Flow: Show PC → Switch → Controllers → Wired Props, plus direct wireless mesh to Twinkly devices.</p>
+    </div>
+  );
+}
+
+function PixelFrameBits(){
+  const [color,setColor] = useState(()=>({r:173,g:46,b:255}));
+  // rotate color every few seconds
+  useState(()=>{
+    const id = setInterval(()=>{
+      setColor({
+        r: Math.floor(Math.random()*256),
+        g: Math.floor(Math.random()*256),
+        b: Math.floor(Math.random()*256)
+      });
+    }, 2000);
+    return () => clearInterval(id);
+  });
+  const toBits = (v:number) => v.toString(2).padStart(8,'0').split('').map(b=> Number(b));
+  const rb = toBits(color.r); const gb = toBits(color.g); const bb = toBits(color.b);
+  const hex = `#${[color.r,color.g,color.b].map(v=> v.toString(16).padStart(2,'0')).join('')}`.toUpperCase();
+  const groupStyle = 'grid grid-cols-8 gap-[2px] p-2 rounded-lg ring-1 ring-neutral-300/60 dark:ring-neutral-700/60 bg-white/70 dark:bg-neutral-900/60';
+  const Bit = ({on, tint}:{on:number; tint:string}) => (
+    <div className={`w-5 h-6 rounded-sm flex items-center justify-center text-[9px] font-mono transition-colors duration-300 ${on? tint+' text-[10px] font-semibold text-white shadow':'bg-neutral-300/50 dark:bg-neutral-700/60 text-neutral-500 dark:text-neutral-400'}`}>{on}</div>
+  );
+  return (
+    <div className="mt-6 space-y-3" aria-label="Visualization of one 24-bit pixel frame">
+      <div className="flex flex-wrap items-center gap-2">
+        <h4 className="text-xs font-semibold uppercase tracking-wide text-brand-maroon dark:text-brand-gold">One 24‑bit Pixel Frame</h4>
+        <span className="text-[10px] px-2 py-0.5 rounded bg-brand-green/20 text-brand-maroon dark:text-brand-gold">8 bits Red + 8 bits Green + 8 bits Blue</span>
+        <div className="flex items-center gap-3 text-[11px] text-neutral-600 dark:text-neutral-400">
+            <span className="inline-flex items-center gap-1"><span className="w-4 h-4 rounded-sm border border-neutral-400/50 dark:border-neutral-600/60" style={{backgroundColor:hex}} /> Current Color <code className="font-mono text-[10px] px-1 py-0.5 rounded bg-neutral-200/70 dark:bg-neutral-800/70">{hex}</code></span>
+        </div>
+      </div>
+      <div className="flex flex-col md:flex-row md:items-stretch gap-3">
+        <div className={groupStyle} aria-label={`Red channel ${color.r} (${rb.join('')})`}>
+          {rb.map((b,i)=><Bit key={i} on={b} tint="bg-red-600" />)}
+          <span className="col-span-8 text-center text-[10px] mt-1 text-red-700 dark:text-red-300 font-medium">R {color.r}</span>
+        </div>
+        <div className={groupStyle} aria-label={`Green channel ${color.g} (${gb.join('')})`}>
+          {gb.map((b,i)=><Bit key={i} on={b} tint="bg-green-600" />)}
+          <span className="col-span-8 text-center text-[10px] mt-1 text-green-700 dark:text-green-300 font-medium">G {color.g}</span>
+        </div>
+        <div className={groupStyle} aria-label={`Blue channel ${color.b} (${bb.join('')})`}>
+          {bb.map((b,i)=><Bit key={i} on={b} tint="bg-sky-600" />)}
+          <span className="col-span-8 text-center text-[10px] mt-1 text-sky-700 dark:text-sky-300 font-medium">B {color.b}</span>
+        </div>
+      </div>
     </div>
   );
 }
@@ -167,17 +210,31 @@ export default function ShowInfo(){
   const [openKey,setOpenKey] = useState<string | null>('leds');
   return (
     <div className="space-y-12">
+      {/* Community / family intro card */}
+      <section className="relative rounded-2xl overflow-hidden ring-1 ring-brand-maroon/20 dark:ring-brand-pine/40 bg-gradient-to-br from-brand-cream/80 via-white/70 to-brand-gold/40 dark:from-brand-pine/60 dark:via-neutral-900/70 dark:to-brand-green/30 p-6 md:p-9">
+        <div className="absolute inset-0 pointer-events-none [mask-image:radial-gradient(circle_at_25%_35%,white,transparent_70%)]" />
+        <div className="relative z-10 max-w-4xl mx-auto space-y-5">
+          <h3 className="text-2xl md:text-3xl font-extrabold tracking-tight text-brand-maroon dark:text-brand-gold">A Family Light Show For Beacon</h3>
+          <p className="text-sm md:text-base leading-relaxed text-neutral-700 dark:text-neutral-300">
+            Jackson Lights is a family-run holiday light show right here in Beacon. 2025 marks our <strong>3rd season</strong> sharing synchronized music and pixels with neighbors, friends, and anyone who stops by. The show is completely <strong>free</strong>—it’s simply our way to add a little more sparkle, joy, and togetherness to the community during the holiday season.
+          </p>
+          <p className="text-xs md:text-sm leading-relaxed text-neutral-600 dark:text-neutral-400">
+            Stop, enjoy a few songs, request what plays next, and snap some photos. Thanks for being part of the Beacon holiday magic.
+          </p>
+        </div>
+      </section>
       {/* Hero intro section */}
       <section className="relative rounded-2xl overflow-hidden ring-1 ring-brand-maroon/20 dark:ring-brand-pine/40 bg-gradient-to-br from-brand-cream/70 via-white/60 to-brand-gold/40 dark:from-brand-pine/50 dark:via-neutral-900/60 dark:to-brand-green/30 p-6 md:p-9">
         <div className="absolute inset-0 pointer-events-none [mask-image:radial-gradient(circle_at_30%_30%,white,transparent_75%)]" />
         <div className="relative z-10 flex flex-col gap-6 md:flex-row md:items-center">
           <div className="flex-1 space-y-4">
-            <h3 className="text-2xl md:text-3xl font-extrabold tracking-tight bg-gradient-to-r from-brand-red via-brand-gold to-brand-green bg-clip-text text-transparent">About The Show</h3>
+            <h3 className="text-2xl md:text-3xl font-extrabold tracking-tight bg-gradient-to-r from-brand-red via-brand-gold to-brand-green bg-clip-text text-transparent">Tech Stuff About The Show</h3>
             <p className="text-sm md:text-base leading-relaxed text-neutral-700 dark:text-neutral-300">
               Jackson Lights is a fully synchronized holiday light experience in Beacon, NY combining music,
               RGB pixels, wireless Twinkly strands, and custom-built props all driven by Falcon & Kulp controllers.
             </p>
             <PixelChainDemo />
+            <PixelFrameBits />
           </div>
           <div className="flex-1 grid grid-cols-2 gap-4">
             {techFacts.map(f => (

@@ -29,7 +29,6 @@ export default function PhotoCarousel() {
           <div className="relative aspect-video">
             <Image src={img.src} alt={img.alt} fill className="object-cover" sizes="(max-width:768px) 100vw, 800px" />
           </div>
-          {img.alt && <figcaption className="px-3 py-2 text-[11px] text-neutral-600 dark:text-neutral-400">{img.alt}</figcaption>}
         </motion.figure>
       ))}
     </div>

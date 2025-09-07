@@ -14,7 +14,7 @@ export default function ShowStatus() {
   const prefs = data.preferences || {};
 
   return (
-    <div className="grid gap-4 sm:gap-6 lg:grid-cols-3" aria-live="polite">
+    <div className="grid gap-4 sm:gap-6 lg:grid-cols-2" aria-live="polite">
   <div className="p-3 sm:p-4 rounded-lg bg-brand-cream/70 dark:bg-neutral-900 border border-brand-maroon/20 dark:border-brand-pine/40">
         <h3 className="text-sm font-semibold uppercase tracking-wide mb-2">Now Playing</h3>
         <motion.p
@@ -27,15 +27,10 @@ export default function ShowStatus() {
       </div>
   <div className="p-3 sm:p-4 rounded-lg bg-brand-cream/70 dark:bg-neutral-900 border border-brand-maroon/20 dark:border-brand-pine/40">
         <h3 className="text-sm font-semibold uppercase tracking-wide mb-2">Show Hours</h3>
-        <p className="text-sm leading-relaxed">Daily until Jan 2 • 5:00 PM – 10:00 PM<br /><span className="text-xs text-neutral-600 dark:text-neutral-400">Weather permitting</span></p>
-        <p className="mt-3 text-xs text-neutral-500 dark:text-neutral-500">Viewer Control: {prefs.viewerControlEnabled ? `${prefs.viewerControlMode}` : 'Disabled'}</p>
+        <p className="text-sm leading-relaxed">Daily starting November 29th • 5:00 PM – 10:00 PM<br /><span className="text-xs text-neutral-600 dark:text-neutral-400">Weather permitting</span></p>
+        <p className="mt-3 text-xs text-neutral-500 dark:text-neutral-500">Song Requests: Currently {prefs.viewerControlEnabled ? `${prefs.viewerControlMode}` : 'Disabled'}</p>
       </div>
-  <div className="p-3 sm:p-4 rounded-lg bg-brand-cream/70 dark:bg-neutral-900 border border-brand-maroon/20 dark:border-brand-pine/40 flex flex-col">
-        <h3 className="text-sm font-semibold uppercase tracking-wide mb-2">Listen Along</h3>
-        <p className="text-xs text-neutral-600 dark:text-neutral-400 mb-2">Tune to <strong>FM 87.9</strong> or press play to stream.</p>
-        <audio id="show-audio-element" aria-label="Show audio stream" controls className="w-full" src="/audio/stream-placeholder.mp3" />
-        {/* <AudioVisualizer /> */}
-      </div>
+      
     </div>
   );
 }
