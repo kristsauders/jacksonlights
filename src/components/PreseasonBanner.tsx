@@ -12,7 +12,7 @@ function easternTargetUtc(): number {
   return eastern.getTime();
 }
 const TARGET_UTC_MS = easternTargetUtc();
-const STORAGE_KEY = 'preseasonBannerDismissed2025';
+// Ephemeral (in-memory) dismissal: once dismissed it stays hidden until a full page reload.
 
 interface TimeParts { days:number; hours:number; minutes:number; seconds:number; }
 
@@ -40,9 +40,8 @@ export default function PreseasonBanner(){
   const [sparkles,setSparkles] = useState<Sparkle[] | null>(null);
   const done = useMemo(()=> mounted && parts.days===0 && parts.hours===0 && parts.minutes===0 && parts.seconds===0, [parts, mounted]);
 
-  useEffect(()=>{
-    try { if (localStorage.getItem(STORAGE_KEY)==='1') setDismissed(true); } catch {}
-  },[]);
+  // No persistence: always show on fresh load.
+  useEffect(()=>{},[]);
 
   useEffect(()=>{
     if (dismissed) return;
@@ -65,8 +64,7 @@ export default function PreseasonBanner(){
   }, [dismissed, sparkles]);
 
   const dismiss = useCallback(()=>{
-    setDismissed(true);
-    try { localStorage.setItem(STORAGE_KEY,'1'); } catch {}
+    setDismissed(true); // stays dismissed for life of current page session
   },[]);
 
   if (dismissed) return null;
