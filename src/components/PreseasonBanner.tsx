@@ -89,8 +89,8 @@ export default function PreseasonBanner(){
             <CountdownDisplay done={done} parts={parts} mounted={mounted} />
           </div>
           <div className="flex flex-row md:flex-col gap-3 md:gap-4">
-            <a href="#requests" onClick={(e)=>{ e.preventDefault(); const el = document.querySelector('[data-tab="requests"]') as HTMLElement | null; el?.click(); }} className="inline-flex items-center gap-2 rounded-lg px-4 py-2.5 bg-brand-green text-white text-xs font-semibold shadow hover:bg-brand-pine transition">Suggest a Song<span className="hidden sm:inline">→</span></a>
-            <a href="#updates" onClick={(e)=>{ e.preventDefault(); const el = document.querySelector('[data-tab="posts"]') as HTMLElement | null; el?.click(); }} className="inline-flex items-center gap-2 rounded-lg px-4 py-2.5 bg-neutral-900/90 dark:bg-neutral-800/80 text-white text-xs font-semibold shadow hover:bg-neutral-700 dark:hover:bg-neutral-700 transition">See Behind The Scenes</a>
+            <a href="#requests" onClick={(e)=>{ e.preventDefault(); (document.querySelector('[data-tab="requests"]') as HTMLElement | null)?.click(); }} className="inline-flex items-center gap-2 rounded-lg px-4 py-2.5 bg-brand-green text-white text-xs font-semibold shadow hover:bg-brand-pine transition">Suggest a Song<span className="hidden sm:inline">→</span></a>
+            <a href="#updates" onClick={(e)=>{ e.preventDefault(); (document.querySelector('[data-tab="posts"]') as HTMLElement | null)?.click(); }} className="inline-flex items-center gap-2 rounded-lg px-4 py-2.5 bg-neutral-900/90 dark:bg-neutral-800/80 text-white text-xs font-semibold shadow hover:bg-neutral-700 dark:hover:bg-neutral-700 transition">See Behind The Scenes</a>
           </div>
         </div>
         <div className="mt-4 text-[10px] tracking-wide text-neutral-500 dark:text-neutral-500 font-medium flex flex-wrap items-center gap-3">

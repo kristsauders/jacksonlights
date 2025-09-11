@@ -21,25 +21,31 @@ export default function TabbedSections(){
   useEffect(()=>{ fetch('/api/metrics/visit', { method:'POST' }).catch(()=>{}); },[]);
   return (
     <div>
-      <Tabs tabs={[
-        { id:'playlist', label:'Song List' },
-        { id:'gallery', label:'Photos' },
-  { id:'videos', label:'Videos' },
-        { id:'info', label:'About Us' },
-        { id:'donate', label:'Donate' },
-        { id:'requests', label:'Requests' },
-        { id:'feedback', label:'Feedback' },
-        { id:'posts', label:'Behind the Scenes' },
-  { id:'admin', label:'Admin' }
-      ]} initial={active} onChange={setActive} />
+  <Tabs tabs={[
+    { id:'playlist', label:'Song List' },
+    { id:'gallery', label:'Gallery' }, // Combined Photos + Videos
+    { id:'info', label:'About Us' },
+    { id:'donate', label:'Donate' },
+    { id:'requests', label:'Requests & Feedback' }, // Combined Requests + Feedback
+    { id:'posts', label:'Behind the Scenes' },
+	{ id:'admin', label:'Admin' }
+  ]} initial={active} onChange={setActive} />
   <div className="mt-3 sm:mt-4 space-y-8 sm:space-y-10">
         {active==='playlist' && <Playlist />}
-        {active==='gallery' && <PhotoCarousel />}
-  {active==='videos' && <VideoGallery />}
+        {active==='gallery' && (
+          <div className="space-y-12">
+            <PhotoCarousel />
+            <VideoGallery />
+          </div>
+        )}
         {active==='info' && <ShowInfo />}
-  {active==='donate' && <Donate />}
-  {active==='requests' && <SongRequests />}
-  {active==='feedback' && <FeedbackForm />}
+        {active==='donate' && <Donate />}
+        {active==='requests' && (
+          <div className="space-y-12">
+            <SongRequests />
+            <FeedbackForm />
+          </div>
+        )}
   {active==='posts' && <PostsFeed />}
   {active==='admin' && (
     <div className="space-y-6">
