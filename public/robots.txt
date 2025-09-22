@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://jacksonlights.com/sitemap.xml

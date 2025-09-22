@@ -12,6 +12,8 @@ interface AdminStats {
   feedback:{ count:number; recent:{ id:string; message:string; name?:string; createdAt:string; }[] };
 }
 
+interface PostItem { id:string; src:string; type:'image'|'video'; alt:string; createdAt?:string; }
+
 export function AdminDashboard(){
   const { data: stats, error, mutate } = useSWR<AdminStats>('/api/admin/stats', fetcher, { refreshInterval: 20000 });
   const { data: feedbackList, mutate: mutateFeedback } = useSWR<any>('/api/admin/feedback', fetcher, { refreshInterval: 30000 });
@@ -25,7 +27,8 @@ export function AdminDashboard(){
 
   return (
     <div className="space-y-8">
-      <UploadSection />
+  <UploadSection />
+  <ManagePostsSection />
       <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard label="Visits" value={stats.visits.toString()} />
         <StatCard label="Donations ($)" value={stats.donations.toFixed(2)} />
@@ -78,12 +81,12 @@ function StatCard({ label, value }:{ label:string; value:string }){
 function UploadSection(){
   const [file,setFile] = useState<File|null>(null);
   const [caption,setCaption] = useState('');
-  const [status,setStatus] = useState<'idle'|'uploading'|'error'|'done'>('idle');
-  const [msg,setMsg] = useState('');
+  const [status,setStatus] = useState<{state:'idle'|'uploading'|'error'|'done'; msg?:string}>({state:'idle'});
+
   async function submit(e:FormEvent){
     e.preventDefault();
     if(!file) return;
-    setStatus('uploading'); setMsg('');
+    setStatus({state:'uploading', msg:undefined});
     try {
       const fd = new FormData();
       fd.append('file', file);
@@ -91,29 +94,95 @@ function UploadSection(){
       const res = await fetch('/api/admin/upload', { method:'POST', body: fd });
       if(!res.ok){
         const data = await res.json().catch(()=>({ message:'Upload failed'}));
-        setStatus('error'); setMsg(data.message||'Upload failed');
+        setStatus({state:'error', msg:data.message||'Upload failed'});
         return;
       }
-      setStatus('done'); setMsg('Uploaded! Refresh Behind the Scenes tab to view.');
+      setStatus({state:'done', msg:'Uploaded! Refresh Behind the Scenes tab to view.'});
       setFile(null); setCaption('');
     } catch (e:any){
-      setStatus('error'); setMsg('Network error');
+      setStatus({state:'error', msg:'Network error'});
     }
   }
   return (
-    <div className="rounded-xl p-5 bg-white/70 dark:bg-neutral-900/60 ring-1 ring-neutral-200 dark:ring-neutral-800">
-      <h4 className="font-semibold text-sm mb-3 text-brand-maroon dark:text-brand-gold">Quick Upload (Photos / Videos)</h4>
+    <div className="rounded-xl ring-1 ring-neutral-200 dark:ring-neutral-800 bg-white/70 dark:bg-neutral-900/60 backdrop-blur p-4 space-y-4">
+      <h3 className="text-sm font-semibold tracking-wide text-brand-maroon dark:text-brand-gold uppercase">Quick Upload</h3>
       <form onSubmit={submit} className="space-y-3">
-        <div className="flex flex-col gap-2">
-          <input type="file" accept="image/*,video/*" onChange={e=> setFile(e.target.files?.[0]||null)} className="text-xs" />
-          <input type="text" value={caption} onChange={e=>setCaption(e.target.value)} placeholder="Caption / description" className="text-xs px-3 py-2 rounded-md border border-neutral-300 dark:border-neutral-700 bg-white/80 dark:bg-neutral-900/60 focus-ring" />
+        <input
+          type="file"
+          accept="image/*,video/mp4,video/webm,video/quicktime"
+          onChange={e=> setFile(e.target.files?.[0]||null)}
+          className="block w-full text-xs file:mr-3 file:rounded-md file:border-0 file:bg-brand-green/80 file:text-white file:px-3 file:py-1.5 file:text-xs hover:file:bg-brand-green"
+          required
+        />
+        <input
+          type="text"
+          placeholder="Caption / short description"
+          maxLength={140}
+          value={caption}
+          onChange={e=> setCaption(e.target.value)}
+          className="w-full rounded-md bg-neutral-100 dark:bg-neutral-800 border border-neutral-300 dark:border-neutral-700 px-3 py-2 text-xs"
+        />
+        <div className="flex items-center gap-3">
+          <button
+            type="submit"
+            disabled={!file || status.state==='uploading'}
+            className="px-4 py-2 rounded-md bg-brand-green text-white text-xs font-semibold disabled:opacity-50"
+          >
+            {status.state==='uploading' ? 'Uploading…' : 'Upload'}
+          </button>
+          {status.state==='error' && <p className="text-xs text-red-600">{status.msg}</p>}
+          {status.state==='done' && <p className="text-xs text-brand-green font-medium">{status.msg}</p>}
         </div>
-        <div className="flex items-center gap-3 flex-wrap">
-          <button disabled={!file || status==='uploading'} className="px-4 py-2 text-xs rounded-md bg-brand-green text-white font-semibold disabled:opacity-50">{status==='uploading'? 'Uploading...':'Upload'}</button>
-          {msg && <span className={`text-[11px] ${status==='error'?'text-red-600 dark:text-red-400':'text-green-600 dark:text-green-400'}`}>{msg}</span>}
-        </div>
-        <p className="text-[10px] text-neutral-500">Files stored on server disk. Ensure hosting allows runtime writes. Max 40MB. Newest appears first.</p>
       </form>
+      <p className="text-[10px] text-neutral-500 leading-relaxed">
+        Tips: For fastest mobile playback, record videos in H.264
+        (iPhone Settings &gt; Camera &gt; Formats &gt; Most Compatible). Large 4K HDR
+        MOV files may load slowly on some devices.
+      </p>
+    </div>
+  );
+}
+
+function ManagePostsSection(){
+  const { data: posts, mutate } = useSWR<PostItem[]>('/posts.json', (u: string)=> fetch(u).then(r=> r.json()));
+  const [deleting, setDeleting] = useState<string|null>(null);
+  async function remove(id:string){
+    if (!confirm('Delete this post? This cannot be undone.')) return;
+    setDeleting(id);
+    try {
+      const res = await fetch('/api/admin/delete', { method:'POST', headers:{ 'Content-Type':'application/json' }, body: JSON.stringify({ id }) });
+      if (res.ok){
+        mutate(posts?.filter(p=> p.id!==id), { revalidate:false });
+      } else {
+        alert('Delete failed');
+      }
+    } catch {
+      alert('Network error');
+    } finally { setDeleting(null); }
+  }
+  return (
+    <div className="rounded-xl ring-1 ring-neutral-200 dark:ring-neutral-800 bg-white/60 dark:bg-neutral-900/50 backdrop-blur p-4 space-y-4">
+      <div className="flex items-center justify-between flex-wrap gap-3">
+        <h3 className="text-sm font-semibold tracking-wide text-brand-maroon dark:text-brand-gold uppercase">Manage Posts</h3>
+        <button onClick={()=> mutate()} className="text-[11px] px-2 py-1 rounded-md bg-neutral-200 dark:bg-neutral-800 hover:bg-neutral-300 dark:hover:bg-neutral-700">Refresh</button>
+      </div>
+      {!posts ? <p className="text-xs text-neutral-500">Loading posts…</p> : posts.length===0 ? <p className="text-xs text-neutral-500">No posts yet.</p> : (
+        <ul className="divide-y divide-neutral-200 dark:divide-neutral-800 max-h-72 overflow-auto pr-1 text-xs">
+          {posts.slice(0,60).map(p=> (
+            <li key={p.id} className="py-2 flex items-start gap-3">
+              <div className="flex-1 min-w-0">
+                <p className="font-medium text-neutral-800 dark:text-neutral-200 truncate">{p.alt || '(no caption)'}</p>
+                <p className="text-[10px] text-neutral-500 tabular-nums">{p.createdAt? new Date(p.createdAt).toLocaleString(): ''}</p>
+              </div>
+              <div className="flex items-center gap-2">
+                <a href={p.src} target="_blank" rel="noopener noreferrer" className="px-2 py-1 rounded bg-neutral-100 dark:bg-neutral-800 hover:bg-neutral-200 dark:hover:bg-neutral-700 text-[10px]">View</a>
+                <button disabled={deleting===p.id} onClick={()=> remove(p.id)} className="px-2 py-1 rounded bg-red-600/90 hover:bg-red-600 text-white text-[10px] disabled:opacity-50">{deleting===p.id? 'Deleting…':'Delete'}</button>
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
+      <p className="text-[10px] text-neutral-500">Deleting removes the media file & JSON entry. Cannot be undone.</p>
     </div>
   );
 }
