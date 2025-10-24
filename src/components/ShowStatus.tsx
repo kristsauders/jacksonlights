@@ -27,7 +27,7 @@ export default function ShowStatus() {
       </div>
   <div className="p-3 sm:p-4 rounded-lg bg-brand-cream/70 dark:bg-neutral-900 border border-brand-maroon/20 dark:border-brand-pine/40">
         <h3 className="text-sm font-semibold uppercase tracking-wide mb-2">Show Hours</h3>
-        <p className="text-sm leading-relaxed">Daily starting November 29th • 5:00 PM – 10:00 PM<br /><span className="text-xs text-neutral-600 dark:text-neutral-400">Weather permitting</span></p>
+        <p className="text-sm leading-relaxed">Daily starting November 28th • 5:00 PM – 10:00 PM<br /><span className="text-xs text-neutral-600 dark:text-neutral-400">Weather permitting</span></p>
         <p className="mt-3 text-xs text-neutral-500 dark:text-neutral-500">Song Requests: Currently {prefs.viewerControlEnabled ? `${prefs.viewerControlMode}` : 'Disabled'}</p>
       </div>
       

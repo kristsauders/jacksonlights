@@ -56,14 +56,9 @@ function PostMedia({ post }: { post: PostItem }) {
         }}
       >
         <p className="text-xs p-2">
-          Your browser can’t play this video. {isMov && 'Tip: Record in “Most Compatible” (H.264) on iPhone for better playback.'}
+          Your browser can’t play this video.
         </p>
       </video>
-      {isMov && (
-        <p className="mt-1 text-[10px] text-neutral-500">
-          If some phones struggle, enable “Most Compatible” in Camera settings (H.264).
-        </p>
-      )}
     </div>
   );
 }

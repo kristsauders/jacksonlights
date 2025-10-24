@@ -12,7 +12,7 @@ import { FeedbackForm } from './';
 import { AdminDashboard } from './AdminDashboard';
 
 export default function TabbedSections(){
-  const [active,setActive] = useState('playlist');
+  const [active,setActive] = useState('gallery');
   const [adminPassword,setAdminPassword] = useState('');
   const [authState,setAuthState] = useState<'idle'|'logging'|'error'|'ok'>('idle');
   const [errorMsg,setErrorMsg] = useState('');
@@ -25,7 +25,7 @@ export default function TabbedSections(){
     { id:'playlist', label:'Song List' },
     { id:'gallery', label:'Gallery' }, // Combined Photos + Videos
     { id:'info', label:'About Us' },
-    { id:'donate', label:'Donate' },
+    // { id:'donate', label:'Donate' },
     { id:'requests', label:'Requests & Feedback' }, // Combined Requests + Feedback
     { id:'posts', label:'Behind the Scenes' },
 	{ id:'admin', label:'Admin' }
