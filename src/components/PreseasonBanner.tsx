@@ -6,7 +6,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 function easternTargetUtc(): number {
   // Use Intl to format the desired local time in Eastern then parse components.
   // Month is 11 (December) index? Actually JS month 10 = November.
-  const eastern = new Date(Date.UTC(2025, 10, 15, 22, 0, 0, 0));
+  const eastern = new Date(Date.UTC(2025, 10, 15, 21, 0, 0, 0));
   // Explanation: 17:00 ET converts to 22:00 UTC during Standard Time (EST, UTC-5) OR 21:00 UTC if DST (EDT, UTC-4).
   // Nov 15 2025 is after DST ends (US DST ends Nov 2 2025), so offset is -5, thus 17:00 +5 = 22:00 UTC.
   return eastern.getTime();
@@ -85,7 +85,7 @@ export default function PreseasonBanner(){
             <h2 className="text-lg sm:text-xl font-extrabold text-neutral-900 dark:text-neutral-100 leading-snug">
               We’re gearing up for another <span className="whitespace-nowrap text-brand-maroon dark:text-brand-gold font-extrabold">bright holiday season!</span>
             </h2>
-            <p className="text-[13px] sm:text-sm leading-relaxed text-neutral-700 dark:text-neutral-300 max-w-2xl">We're getting ready to put up 40 thousand lights! We’ll share progress updates here as we get closer to lighting up the neighborhood. Check back through the fall for sneak peeks—and drop your song ideas in the Requests tab!</p>
+            <p className="text-[13px] sm:text-sm leading-relaxed text-neutral-700 dark:text-neutral-300 max-w-2xl">We're getting ready to put up 42 thousand lights! We’ll share progress updates here as we get closer to lighting up the neighborhood. Check back through the fall for sneak peeks—and drop your song ideas in the Requests tab!</p>
             <CountdownDisplay done={done} parts={parts} mounted={mounted} />
           </div>
           <div className="flex flex-row md:flex-col gap-3 md:gap-4">

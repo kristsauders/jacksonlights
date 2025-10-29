@@ -38,7 +38,6 @@ export default function FeedbackForm(){
           {status.state==='success' && <span className="text-xs text-green-600 dark:text-green-400">{status.msg}</span>}
         </div>
       </form>
-  <p className="mt-4 text-[11px] text-neutral-500 dark:text-neutral-500">Feedback is stored locally on the server (no email currently sent).</p>
     </div>
   );
 }

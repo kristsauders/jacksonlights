@@ -43,7 +43,7 @@ export default function SongRequests(){
     <div className="space-y-8">
       <div className="text-center space-y-4">
         <h3 className="text-2xl md:text-3xl font-extrabold tracking-tight bg-gradient-to-r from-brand-red via-brand-gold to-brand-green bg-clip-text text-transparent">Suggest Songs For Next Year</h3>
-        <p className="text-sm md:text-base max-w-2xl mx-auto text-neutral-700 dark:text-neutral-300">Drop ideas for tracks you&apos;d love to see sequenced next season. Upvote others you like. Higher vote counts help prioritize sequencing time.</p>
+        <p className="text-sm md:text-base max-w-2xl mx-auto text-neutral-700 dark:text-neutral-300">Submit ideas for songs you&apos;d love to see added next season.</p>
       </div>
       <form onSubmit={addIdea} className="flex flex-col sm:flex-row gap-3">
         <input value={title} onChange={e=>setTitle(e.target.value)} placeholder="Suggest a song (title - artist)" className="flex-1 rounded-lg bg-white/80 dark:bg-neutral-900/70 ring-1 ring-neutral-300 dark:ring-neutral-700 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-green text-neutral-800 dark:text-neutral-200" />
@@ -82,14 +82,9 @@ export default function SongRequests(){
           <div className="rounded-xl bg-gradient-to-br from-brand-cream/70 via-white/60 to-brand-gold/40 dark:from-brand-pine/60 dark:via-neutral-900/60 dark:to-brand-green/30 p-5 ring-1 ring-brand-maroon/15 dark:ring-brand-pine/30">
             <h4 className="text-sm font-semibold uppercase tracking-wide text-brand-maroon dark:text-brand-gold mb-2">Guidelines</h4>
             <ul className="text-[11px] space-y-1 text-neutral-600 dark:text-neutral-400 list-disc pl-4">
-              <li>Holiday or high-energy tracks work best</li>
+              <li>Holiday, high-energy, or well-known tracks work best</li>
               <li>Family friendly lyrics</li>
-              <li>Unique ideas over duplicates</li>
             </ul>
-          </div>
-          <div className="rounded-xl bg-white/70 dark:bg-neutral-900/60 backdrop-blur p-5 ring-1 ring-neutral-200 dark:ring-neutral-800">
-            <h4 className="text-sm font-semibold uppercase tracking-wide text-brand-maroon dark:text-brand-gold mb-2">Process</h4>
-            <p className="text-[11px] leading-relaxed text-neutral-600 dark:text-neutral-400">Top-voted ideas move into the sequencing shortlist after the season. Not every track can make it, but votes help prioritize.</p>
           </div>
         </aside>
       </div>

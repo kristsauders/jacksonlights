@@ -68,7 +68,9 @@ export default function PostsFeed() {
   const [error, setError] = useState<string | undefined>();
 
   useEffect(() => {
-    fetch('/posts.json')
+    // Add cache-busting timestamp to prevent stale data
+    const cacheBuster = `?t=${Date.now()}`;
+    fetch(`/posts.json${cacheBuster}`)
       .then((r) => (r.ok ? r.json() : []))
       .then((data: PostItem[]) => {
         const sorted = [...data].sort((a, b) => {

@@ -312,7 +312,7 @@ export default function ShowInfo(){
       {/* Placeholder stats for future customization */}
       <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {[
-          { label:'Total Pixels', value:'40 thousand' },
+          { label:'Total Pixels', value:'~42 thousand' },
           { label:'Songs', value:'~40' },
           { label:'Controllers', value:'Falcon + Kulp + (Wireless Twinkly)' },
           { label:'Voltage', value:'12V Pixels + 24V Twinkly' }

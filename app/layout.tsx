@@ -111,10 +111,34 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         />
       </head>
       <body>
+        {/* Loading screen - shown instantly, hidden after React hydrates */}
+        <div id="loading-screen" className="fixed inset-0 z-50 flex items-center justify-center bg-white dark:bg-neutral-950 transition-opacity duration-500">
+          <div className="flex flex-col items-center gap-4">
+            <div className="relative w-16 h-16">
+              <div className="absolute inset-0 border-4 border-green-200 dark:border-green-900 rounded-full"></div>
+              <div className="absolute inset-0 border-4 border-transparent border-t-green-700 dark:border-t-green-500 rounded-full animate-spin"></div>
+            </div>
+            <p className="text-sm font-medium text-neutral-600 dark:text-neutral-400 animate-pulse">
+              Loading Jackson Lights...
+            </p>
+          </div>
+        </div>
         <Providers>
           {children}
         </Providers>
         <script dangerouslySetInnerHTML={{ __html: `(${registerSW.toString()})()` }} />
+        <script dangerouslySetInnerHTML={{ __html: `
+          // Hide loading screen once page is interactive
+          window.addEventListener('DOMContentLoaded', function() {
+            setTimeout(function() {
+              var loader = document.getElementById('loading-screen');
+              if (loader) {
+                loader.style.opacity = '0';
+                setTimeout(function() { loader.style.display = 'none'; }, 500);
+              }
+            }, 100);
+          });
+        ` }} />
       </body>
     </html>
   );

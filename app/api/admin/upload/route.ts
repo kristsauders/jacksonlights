@@ -16,8 +16,8 @@ export async function POST(req: NextRequest){
     if (!file || !(file instanceof File)) return NextResponse.json({ message:'File required' }, { status:400 });
     const allowed = ['image/jpeg','image/png','image/webp','video/mp4','video/quicktime','video/webm'];
     if (!allowed.includes(file.type)) return NextResponse.json({ message:'Unsupported file type' }, { status:400 });
-    const MAX_BYTES = 40 * 1024 * 1024; // 40MB
-    if (file.size > MAX_BYTES) return NextResponse.json({ message:'File too large (max 40MB)' }, { status:400 });
+    const MAX_BYTES = 200 * 1024 * 1024; // 200MB
+    if (file.size > MAX_BYTES) return NextResponse.json({ message:'File too large (max 200MB)' }, { status:400 });
 
     const isVideo = file.type.startsWith('video/');
     const extMap: Record<string,string> = { 'image/jpeg':'.jpg','image/png':'.png','image/webp':'.webp','video/mp4':'.mp4','video/quicktime':'.mov','video/webm':'.webm' };
@@ -38,7 +38,9 @@ export async function POST(req: NextRequest){
       if (!Array.isArray(posts)) posts = [];
     } catch {/* ignore */}
     const createdAt = new Date().toISOString();
-    const newItem: StoredPost = { id, src:`/posts/${filename}`, type: isVideo? 'video':'image', alt: caption || (isVideo? 'Uploaded video':'Uploaded image'), createdAt };
+    // Add cache-busting timestamp to media URL
+    const timestamp = Date.now();
+    const newItem: StoredPost = { id, src:`/posts/${filename}?v=${timestamp}`, type: isVideo? 'video':'image', alt: caption || (isVideo? 'Uploaded video':'Uploaded image'), createdAt };
     // Prepend newest first
     posts.unshift(newItem);
     await writeFile(postsJsonPath, JSON.stringify(posts, null, 2));
