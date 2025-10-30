@@ -66,21 +66,25 @@ function PostMedia({ post }: { post: PostItem }) {
 export default function PostsFeed() {
   const [posts, setPosts] = useState<PostItem[]>([]);
   const [error, setError] = useState<string | undefined>();
+  const [refreshKey, setRefreshKey] = useState(0);
 
   useEffect(() => {
-    // Add cache-busting timestamp to prevent stale data
-    const cacheBuster = `?t=${Date.now()}`;
-    fetch(`/posts.json${cacheBuster}`)
+    // Fetch from API endpoint that scans the posts directory
+    fetch('/api/posts')
       .then((r) => (r.ok ? r.json() : []))
       .then((data: PostItem[]) => {
-        const sorted = [...data].sort((a, b) => {
-          const ad = a.createdAt ? Date.parse(a.createdAt) : 0;
-          const bd = b.createdAt ? Date.parse(b.createdAt) : 0;
-          return bd - ad;
-        });
-        setPosts(sorted);
+        setPosts(data);
       })
       .catch(() => setError('Unable to load posts'));
+  }, [refreshKey]);
+
+  // Listen for custom event when a new post is uploaded
+  useEffect(() => {
+    const handleNewPost = () => {
+      setRefreshKey(prev => prev + 1);
+    };
+    window.addEventListener('newPostUploaded', handleNewPost);
+    return () => window.removeEventListener('newPostUploaded', handleNewPost);
   }, []);
 
   if (error) {

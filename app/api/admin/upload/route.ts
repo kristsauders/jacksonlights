@@ -1,9 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyAdminToken } from '../../../../src/lib/adminAuth';
-import { mkdir, writeFile, readFile } from 'fs/promises';
+import { mkdir, writeFile } from 'fs/promises';
 import path from 'path';
 
-interface StoredPost { id:string; src:string; type:'image'|'video'; alt:string; createdAt:string; }
+interface PostMetadata { 
+  id: string; 
+  filename: string; 
+  type: 'image' | 'video'; 
+  alt: string; 
+  createdAt: string; 
+}
 
 export async function POST(req: NextRequest){
   // Auth check
@@ -20,33 +26,41 @@ export async function POST(req: NextRequest){
     if (file.size > MAX_BYTES) return NextResponse.json({ message:'File too large (max 200MB)' }, { status:400 });
 
     const isVideo = file.type.startsWith('video/');
-    const extMap: Record<string,string> = { 'image/jpeg':'.jpg','image/png':'.png','image/webp':'.webp','video/mp4':'.mp4','video/quicktime':'.mov','video/webm':'.webm' };
-    const id = Date.now().toString(36)+Math.random().toString(36).slice(2,8);
+    const extMap: Record<string,string> = { 
+      'image/jpeg':'.jpg',
+      'image/png':'.png',
+      'image/webp':'.webp',
+      'video/mp4':'.mp4',
+      'video/quicktime':'.mov',
+      'video/webm':'.webm' 
+    };
+    
+    const id = Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
     const filename = id + extMap[file.type];
-    const publicDir = path.join(process.cwd(),'public');
-    const postsDir = path.join(publicDir,'posts');
-    await mkdir(postsDir, { recursive:true });
+    const publicDir = path.join(process.cwd(), 'public');
+    const postsDir = path.join(publicDir, 'posts');
+    await mkdir(postsDir, { recursive: true });
+    
+    // Write media file
     const arrayBuffer = await file.arrayBuffer();
     await writeFile(path.join(postsDir, filename), Buffer.from(arrayBuffer));
 
-    // Update posts.json
-    const postsJsonPath = path.join(publicDir,'posts.json');
-    let posts: StoredPost[] = [];
-    try {
-      const raw = await readFile(postsJsonPath,'utf8');
-      posts = JSON.parse(raw) as StoredPost[];
-      if (!Array.isArray(posts)) posts = [];
-    } catch {/* ignore */}
+    // Write metadata JSON file (same name but .json extension)
     const createdAt = new Date().toISOString();
-    // Add cache-busting timestamp to media URL
-    const timestamp = Date.now();
-    const newItem: StoredPost = { id, src:`/posts/${filename}?v=${timestamp}`, type: isVideo? 'video':'image', alt: caption || (isVideo? 'Uploaded video':'Uploaded image'), createdAt };
-    // Prepend newest first
-    posts.unshift(newItem);
-    await writeFile(postsJsonPath, JSON.stringify(posts, null, 2));
+    const metadata: PostMetadata = { 
+      id, 
+      filename, 
+      type: isVideo ? 'video' : 'image', 
+      alt: caption || (isVideo ? 'Uploaded video' : 'Uploaded image'), 
+      createdAt 
+    };
+    await writeFile(
+      path.join(postsDir, `${id}.json`), 
+      JSON.stringify(metadata, null, 2)
+    );
 
-    return NextResponse.json({ ok:true, item:newItem });
-  } catch (e:any){
-    return NextResponse.json({ message:'Upload failed' }, { status:500 });
+    return NextResponse.json({ ok: true, item: { ...metadata, src: `/api/posts/media/${filename}` } });
+  } catch (e: any) {
+    return NextResponse.json({ message: 'Upload failed' }, { status: 500 });
   }
 }

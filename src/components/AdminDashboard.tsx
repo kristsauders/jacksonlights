@@ -97,8 +97,10 @@ function UploadSection(){
         setStatus({state:'error', msg:data.message||'Upload failed'});
         return;
       }
-      setStatus({state:'done', msg:'Uploaded! Refresh Behind the Scenes tab to view.'});
+      setStatus({state:'done', msg:'Uploaded! Check Behind the Scenes tab.'});
       setFile(null); setCaption('');
+      // Trigger event to refresh PostsFeed
+      window.dispatchEvent(new Event('newPostUploaded'));
     } catch (e:any){
       setStatus({state:'error', msg:'Network error'});
     }
@@ -144,8 +146,16 @@ function UploadSection(){
 }
 
 function ManagePostsSection(){
-  const { data: posts, mutate } = useSWR<PostItem[]>('/posts.json', (u: string)=> fetch(u).then(r=> r.json()));
+  const { data: posts, mutate } = useSWR<PostItem[]>('/api/posts', (u: string)=> fetch(u).then(r=> r.json()));
   const [deleting, setDeleting] = useState<string|null>(null);
+  
+  // Listen for new post uploads to refresh
+  useEffect(() => {
+    const handleRefresh = () => mutate();
+    window.addEventListener('newPostUploaded', handleRefresh);
+    return () => window.removeEventListener('newPostUploaded', handleRefresh);
+  }, [mutate]);
+  
   async function remove(id:string){
     if (!confirm('Delete this post? This cannot be undone.')) return;
     setDeleting(id);
@@ -153,6 +163,8 @@ function ManagePostsSection(){
       const res = await fetch('/api/admin/delete', { method:'POST', headers:{ 'Content-Type':'application/json' }, body: JSON.stringify({ id }) });
       if (res.ok){
         mutate(posts?.filter(p=> p.id!==id), { revalidate:false });
+        // Trigger event to refresh PostsFeed
+        window.dispatchEvent(new Event('newPostUploaded'));
       } else {
         alert('Delete failed');
       }

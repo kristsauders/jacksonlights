@@ -1,34 +1,57 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyAdminToken } from '../../../../src/lib/adminAuth';
 import path from 'path';
-import { readFile, writeFile, unlink } from 'fs/promises';
+import { readdir, readFile, unlink } from 'fs/promises';
 
-interface PostItem { id:string; src:string; type:'image'|'video'; alt:string; createdAt?:string; }
+interface PostMetadata { 
+  id: string; 
+  filename: string; 
+  type: 'image' | 'video'; 
+  alt: string; 
+  createdAt: string; 
+}
 
-export async function POST(req:NextRequest){
+export async function POST(req: NextRequest) {
   const token = req.cookies.get('admin_token')?.value;
-  if (!verifyAdminToken(token)) return NextResponse.json({ message:'Unauthorized' }, { status:401 });
+  if (!verifyAdminToken(token)) return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
+  
   try {
     const { id } = await req.json();
-    if (!id) return NextResponse.json({ message:'Missing id' }, { status:400 });
-    const publicDir = path.join(process.cwd(),'public');
-    const postsJsonPath = path.join(publicDir,'posts.json');
-    let posts: PostItem[] = [];
+    if (!id) return NextResponse.json({ message: 'Missing id' }, { status: 400 });
+    
+    const publicDir = path.join(process.cwd(), 'public');
+    const postsDir = path.join(publicDir, 'posts');
+    
+    // Read the metadata file
+    const metadataPath = path.join(postsDir, `${id}.json`);
+    let metadata: PostMetadata;
+    
     try {
-      const raw = await readFile(postsJsonPath,'utf8');
-      posts = JSON.parse(raw) as PostItem[];
-    } catch {/* ignore */}
-    const idx = posts.findIndex(p=> p.id === id);
-    if (idx === -1) return NextResponse.json({ message:'Not found' }, { status:404 });
-    const [removed] = posts.splice(idx,1);
-    // Remove underlying file if inside /posts/
-    if (removed.src.startsWith('/posts/')){
-      const filePath = path.join(publicDir, removed.src.replace(/^\//,''));
-      try { await unlink(filePath); } catch {/* ignore missing */}
+      const content = await readFile(metadataPath, 'utf8');
+      metadata = JSON.parse(content);
+    } catch {
+      return NextResponse.json({ message: 'Post not found' }, { status: 404 });
     }
-    await writeFile(postsJsonPath, JSON.stringify(posts, null, 2));
-    return NextResponse.json({ ok:true });
-  } catch (e:any){
-    return NextResponse.json({ message:'Delete failed' }, { status:500 });
+    
+    // Delete the media file
+    const mediaPath = path.join(postsDir, metadata.filename);
+    try {
+      await unlink(mediaPath);
+    } catch {
+      // File might already be deleted, continue
+    }
+    
+    // Delete the metadata JSON file
+    try {
+      await unlink(metadataPath);
+    } catch {
+      // File might already be deleted
+    }
+    
+    // Trigger event to refresh PostsFeed
+    return NextResponse.json({ ok: true });
+  } catch (e: any) {
+    console.error('Delete failed:', e);
+    return NextResponse.json({ message: 'Delete failed' }, { status: 500 });
   }
 }
