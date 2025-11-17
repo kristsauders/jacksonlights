@@ -12,7 +12,7 @@ import { FeedbackForm } from './';
 import { AdminDashboard } from './AdminDashboard';
 
 export default function TabbedSections(){
-  const [active,setActive] = useState('gallery');
+  const [active,setActive] = useState('posts');
   const [adminPassword,setAdminPassword] = useState('');
   const [authState,setAuthState] = useState<'idle'|'logging'|'error'|'ok'>('idle');
   const [errorMsg,setErrorMsg] = useState('');

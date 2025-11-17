@@ -1,14 +1,14 @@
 "use client";
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
-// Target launch: Nov 15 2025 17:00 America/New_York (Eastern Time)
+// Target launch: Nov 28 2025 17:00 America/New_York (Eastern Time)
 // We derive a fixed UTC timestamp so all clients see the same countdown regardless of their local timezone.
 function easternTargetUtc(): number {
   // Use Intl to format the desired local time in Eastern then parse components.
-  // Month is 11 (December) index? Actually JS month 10 = November.
-  const eastern = new Date(Date.UTC(2025, 10, 15, 21, 0, 0, 0));
-  // Explanation: 17:00 ET converts to 22:00 UTC during Standard Time (EST, UTC-5) OR 21:00 UTC if DST (EDT, UTC-4).
-  // Nov 15 2025 is after DST ends (US DST ends Nov 2 2025), so offset is -5, thus 17:00 +5 = 22:00 UTC.
+  // Month is 10 (November)
+  const eastern = new Date(Date.UTC(2025, 10, 28, 22, 0, 0, 0));
+  // Explanation: 17:00 ET converts to 22:00 UTC during Standard Time (EST, UTC-5).
+  // Nov 28 2025 is after DST ends (US DST ends Nov 2 2025), so offset is -5, thus 17:00 +5 = 22:00 UTC.
   return eastern.getTime();
 }
 const TARGET_UTC_MS = easternTargetUtc();
@@ -81,11 +81,11 @@ export default function PreseasonBanner(){
         </button>
         <div className="flex flex-col md:flex-row md:items-center gap-5 md:gap-8 relative z-10">
           <div className="flex-1 space-y-2">
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-brand-maroon dark:text-brand-gold/90">2025 Season Prep</p>
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-brand-maroon dark:text-brand-gold/90">2025 Season Starting Soon</p>
             <h2 className="text-lg sm:text-xl font-extrabold text-neutral-900 dark:text-neutral-100 leading-snug">
-              We’re gearing up for another <span className="whitespace-nowrap text-brand-maroon dark:text-brand-gold font-extrabold">bright holiday season!</span>
+              Nightly shows start <span className="whitespace-nowrap text-brand-maroon dark:text-brand-gold font-extrabold">Friday, November 28th!</span>
             </h2>
-            <p className="text-[13px] sm:text-sm leading-relaxed text-neutral-700 dark:text-neutral-300 max-w-2xl">We're getting ready to put up 42 thousand lights! We’ll share progress updates here as we get closer to lighting up the neighborhood. Check back through the fall for sneak peeks—and drop your song ideas in the Requests tab!</p>
+            <p className="text-[13px] sm:text-sm leading-relaxed text-neutral-700 dark:text-neutral-300 max-w-2xl">Join us every night from 5:00 PM to 10:00 PM for a synchronized light show featuring 42 thousand lights! Thanks to everyone who came to our preview party—we can't wait to see you again. Drop your song requests in the Requests tab!</p>
             <CountdownDisplay done={done} parts={parts} mounted={mounted} />
           </div>
           <div className="flex flex-row md:flex-col gap-3 md:gap-4">
@@ -94,7 +94,7 @@ export default function PreseasonBanner(){
           </div>
         </div>
         <div className="mt-4 text-[10px] tracking-wide text-neutral-500 dark:text-neutral-500 font-medium flex flex-wrap items-center gap-3">
-          <span>Preview Party: Nov 15 · 5:00 PM</span>
+          <span>Nightly Shows Begin: Nov 28 · 5:00–10:00 PM</span>
           <span className="px-2 py-0.5 rounded-full bg-brand-green/15 text-brand-green text-[10px] font-semibold tabular-nums">{timeString}</span>
         </div>
       </div>

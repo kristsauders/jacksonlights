@@ -43,8 +43,6 @@ const CATEGORY_MAP: Record<string, 'Christmas' | 'Pop & Electronic' | 'Kids' | '
   "Journey - Don't Stop Believin": 'Pop & Electronic',
   "Jung Kook - Standing Next to You": 'Pop & Electronic',
   "Jung Kook - Standing Next to You 2025 40fps": 'Pop & Electronic',
-  "KPop Demon Hunters - Golden 2025 40fps": 'Pop & Electronic',
-  "Kpop Demon Hunters Movie Version 2025 40fps": 'Pop & Electronic',
   "Lindsey Stirling - Magic": 'Pop & Electronic',
   "Majestic x Boney M - Rasputin": 'Pop & Electronic',
   "Mark Ronson - Uptown Funk": 'Pop & Electronic',
@@ -60,15 +58,22 @@ const CATEGORY_MAP: Record<string, 'Christmas' | 'Pop & Electronic' | 'Kids' | '
   // Kids
   "Frozen -  Let It Go": 'Kids',
   "Frozen 2 - Into the Unknown (Panic! At The Disco Version)": 'Kids',
-  "Griff - Pure Imagination": 'Kids',
   "I Am A Gummy Bear": 'Kids',
   "It's Raining Tacos": 'Kids',
   "Jack Hartmann - Tooty Ta": 'Kids',
-  "Wicked - Defying Gravity": 'Kids',
+  "KPop Demon Hunters - Golden 2025 40fps": 'Kids',
+  "Kpop Demon Hunters Movie Version 2025 40fps": 'Kids',
 };
 
 function categorize(displayName: string): 'Christmas' | 'Pop & Electronic' | 'Kids' | 'Other' {
-  return CATEGORY_MAP[displayName] || 'Other';
+  // Try exact match first
+  if (CATEGORY_MAP[displayName]) {
+    return CATEGORY_MAP[displayName];
+  }
+  
+  // Try with "2025 40fps" removed for backward compatibility
+  const normalized = displayName.replace(/\s*2025\s*40fps\s*$/i, '').trim();
+  return CATEGORY_MAP[normalized] || 'Other';
 }
 
 export default function Playlist() {
@@ -76,8 +81,11 @@ export default function Playlist() {
   const { data, error, isLoading } = useSWR('/api/status', fetcher, { refreshInterval: 30000 });
   const [query, setQuery] = useState('');
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set([]));
+  const [requestingSeq, setRequestingSeq] = useState<string | null>(null);
+  const [successSeq, setSuccessSeq] = useState<string | null>(null);
 
   const sequences = (data?.sequences || []) as any[];
+  const viewerControlEnabled = data?.preferences?.viewerControlEnabled ?? false;
   
   // Group by category and filter by search
   const grouped = useMemo(() => {
@@ -102,11 +110,29 @@ export default function Playlist() {
   const totalFiltered = Object.values(grouped).reduce((sum, arr) => sum + arr.length, 0);
 
   async function handleRequest(sequence: string) {
+    // Check if viewer control is enabled before sending request
+    if (!viewerControlEnabled) {
+      alert('Song requests are currently disabled. Please try again when the show is active!');
+      return;
+    }
+    
+    setRequestingSeq(sequence);
     try {
       const res = await fetch('/api/request', { method: 'POST', body: JSON.stringify({ sequence }) });
-      if (!res.ok) throw new Error('Request failed');
-    } catch (e) {
-      alert('Unable to request the song right now.');
+      const data = await res.json();
+      
+      if (!res.ok) {
+        throw new Error(data.message || 'Request failed');
+      }
+      
+      // If response is OK (200), treat it as success
+      // Remote Falcon API returns 200 when request is accepted
+      setSuccessSeq(sequence);
+      setTimeout(() => setSuccessSeq(null), 2000);
+    } catch (e: any) {
+      alert(e.message || 'Unable to request the song right now.');
+    } finally {
+      setRequestingSeq(null);
     }
   }
 
@@ -124,6 +150,26 @@ export default function Playlist() {
 
   return (
     <div className="space-y-3 sm:space-y-4">
+      {!viewerControlEnabled && (
+        <div className="rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-300 dark:border-amber-700/50 p-3 sm:p-4">
+          <p className="text-sm text-amber-900 dark:text-amber-200 font-medium mb-1">
+            ⚠️ Requests Currently Disabled
+          </p>
+          <p className="text-xs text-amber-800 dark:text-amber-300">
+            Song requests are disabled right now. Check back when the show is running to request your favorites!
+          </p>
+        </div>
+      )}
+      {viewerControlEnabled && (
+        <div className="rounded-lg bg-brand-green/10 dark:bg-brand-green/15 border border-brand-green/30 dark:border-brand-green/40 p-3 sm:p-4">
+          <p className="text-sm text-neutral-800 dark:text-neutral-200 font-medium mb-1">
+            🎵 Choose a Song
+          </p>
+          <p className="text-xs text-neutral-600 dark:text-neutral-400">
+            Browse our song list below and click "Play Next" on any song to hear it right away. You can request multiple songs and they will be queued up too!
+          </p>
+        </div>
+      )}
       {error && <div role="alert" className="text-red-600">Error loading playlist</div>}
       <div className="flex flex-col gap-2 sm:gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex gap-2 items-center flex-wrap">
@@ -176,17 +222,32 @@ export default function Playlist() {
                 {isExpanded && (
                   <div className="p-3 bg-neutral-50/50 dark:bg-neutral-900/30">
                     <div className="grid gap-2.5 sm:gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                      {songs.map(seq => (
-                        <div key={seq.name} className="p-3 sm:p-4 rounded-lg bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 flex flex-col shadow-sm">
-                          <h3 className="font-medium text-sm" aria-label={`Song ${seq.displayName}`}>{seq.displayName}</h3>
-                          <p className="mt-1 text-xs text-neutral-600 dark:text-neutral-400">
-                            {seq.duration ? `${Math.floor(seq.duration/60)}m ${seq.duration%60}s` : 'Duration unknown'}
-                          </p>
-                          <div className="mt-2 flex gap-2">
-                            <button onClick={() => handleRequest(seq.name)} className="focus-ring flex-1 text-[11px] sm:text-xs rounded border border-brand-green/40 bg-brand-green/10 dark:bg-brand-green/15 text-brand-green dark:text-brand-gold font-medium py-1.5 hover:bg-brand-green/20 dark:hover:bg-brand-green/25 transition-colors">Play Next</button>
+                      {songs.map(seq => {
+                        const cleanDisplayName = seq.displayName.replace(/\s*2025\s*40fps\s*$/i, '').trim();
+                        const isRequesting = requestingSeq === seq.name;
+                        const isSuccess = successSeq === seq.name;
+                        return (
+                          <div key={seq.name} className="p-3 sm:p-4 rounded-lg bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 flex flex-col shadow-sm">
+                            <h3 className="font-medium text-sm" aria-label={`Song ${cleanDisplayName}`}>{cleanDisplayName}</h3>
+                            <p className="mt-1 text-xs text-neutral-600 dark:text-neutral-400">
+                              {seq.duration ? `${Math.floor(seq.duration/60)}m ${seq.duration%60}s` : 'Duration unknown'}
+                            </p>
+                            <div className="mt-2 flex gap-2">
+                              <button 
+                                onClick={() => handleRequest(seq.name)} 
+                                disabled={isRequesting || !viewerControlEnabled}
+                                className={`focus-ring flex-1 text-[11px] sm:text-xs rounded border font-medium py-1.5 transition-all ${
+                                  isSuccess 
+                                    ? 'border-green-500 bg-green-500 text-white' 
+                                    : 'border-brand-green/40 bg-brand-green/10 dark:bg-brand-green/15 text-brand-green dark:text-brand-gold hover:bg-brand-green/20 dark:hover:bg-brand-green/25'
+                                } disabled:opacity-50 disabled:cursor-not-allowed`}
+                              >
+                                {isRequesting ? 'Requesting...' : isSuccess ? '✓ Requested!' : 'Play Next'}
+                              </button>
+                            </div>
                           </div>
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   </div>
                 )}
