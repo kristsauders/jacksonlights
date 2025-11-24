@@ -26,6 +26,7 @@ const CATEGORY_MAP: Record<string, 'Christmas' | 'Pop & Electronic' | 'Kids' | '
   "Sia - Candy Cane Lane 2025 40fps": 'Christmas',
   "Small Town Titans - You're a Mean One, Mr": 'Christmas',
   "Snoop Dogg - Doggy Dogg Christmas": 'Christmas',
+  "Sia - Santas's Coming For Us": 'Christmas',
   
   // Pop & Electronic
   "Ajr - Bang!": 'Pop & Electronic',
@@ -54,15 +55,20 @@ const CATEGORY_MAP: Record<string, 'Christmas' | 'Pop & Electronic' | 'Kids' | '
   "The Weeknd - Blinding Lights": 'Pop & Electronic',
   "The Weeknd feat Ariana Grande - Save Your Tears (Remix) 2025 40fps": 'Pop & Electronic',
   "Tiesto - The Business": 'Pop & Electronic',
+  "Teddy Swims - Lose Control (Tiesto Remix)": 'Pop & Electronic',
+  "Major Lazer - Lean On": 'Pop & Electronic',
   
   // Kids
   "Frozen -  Let It Go": 'Kids',
   "Frozen 2 - Into the Unknown (Panic! At The Disco Version)": 'Kids',
+  "Frozen - Into the Unknown (Panic! At The Disco Version)": 'Kids',
   "I Am A Gummy Bear": 'Kids',
   "It's Raining Tacos": 'Kids',
   "Jack Hartmann - Tooty Ta": 'Kids',
   "KPop Demon Hunters - Golden 2025 40fps": 'Kids',
   "Kpop Demon Hunters Movie Version 2025 40fps": 'Kids',
+  "KPop Demon Hunters - Your Idol": 'Kids',
+  "Parry Gripp - It's Raining Tacos On Christmas Eve": 'Kids'
 };
 
 function categorize(displayName: string): 'Christmas' | 'Pop & Electronic' | 'Kids' | 'Other' {
