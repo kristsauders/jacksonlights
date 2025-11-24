@@ -12,7 +12,6 @@ const CATEGORY_MAP: Record<string, 'Christmas' | 'Pop & Electronic' | 'Kids' | '
   "Alicia Moffett - Winter Wonderland": 'Christmas',
   "Alicia Moffett - Winter Wonderland 2025 40fps": 'Christmas',
   "Biometrix - Silent Night": 'Christmas',
-  "Crowder - The Elf Song": 'Christmas',
   "Kaskade - Jingle Bells": 'Christmas',
   "Kaskade - Christmas is Here": 'Christmas',
   "Mariah Carey - All I Want For Christmas Is You": 'Christmas',
@@ -21,12 +20,11 @@ const CATEGORY_MAP: Record<string, 'Christmas' | 'Pop & Electronic' | 'Kids' | '
   "Meghan Trainor - I Believe In Santa": 'Christmas',
   "Polar Express - Hot Chocolate": 'Christmas',
   "Pop Christmas Song Mashup": 'Christmas',
-  "Samuel Kim - Imperial March x Carol of the Bells": 'Christmas',
   "Sia - Candy Cane Lane": 'Christmas',
   "Sia - Candy Cane Lane 2025 40fps": 'Christmas',
   "Small Town Titans - You're a Mean One, Mr": 'Christmas',
   "Snoop Dogg - Doggy Dogg Christmas": 'Christmas',
-  "Sia - Santas's Coming For Us": 'Christmas',
+  "Sia -  Santa's Coming For Us": 'Christmas',
   
   // Pop & Electronic
   "Ajr - Bang!": 'Pop & Electronic',
@@ -68,7 +66,9 @@ const CATEGORY_MAP: Record<string, 'Christmas' | 'Pop & Electronic' | 'Kids' | '
   "KPop Demon Hunters - Golden 2025 40fps": 'Kids',
   "Kpop Demon Hunters Movie Version 2025 40fps": 'Kids',
   "KPop Demon Hunters - Your Idol": 'Kids',
-  "Parry Gripp - It's Raining Tacos On Christmas Eve": 'Kids'
+  "Parry Gripp - It's Raining Tacos On Christmas Eve": 'Kids',
+  "Crowder - The Elf Song": 'Kids',
+  // "Samuel Kim - Imperial March x Carol of the Bells": 'Christmas',
 };
 
 function categorize(displayName: string): 'Christmas' | 'Pop & Electronic' | 'Kids' | 'Other' {
