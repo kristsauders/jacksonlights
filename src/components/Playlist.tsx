@@ -24,7 +24,8 @@ const CATEGORY_MAP: Record<string, 'Christmas' | 'Pop & Electronic' | 'Kids' | '
   "Sia - Candy Cane Lane 2025 40fps": 'Christmas',
   "Small Town Titans - You're a Mean One, Mr": 'Christmas',
   "Snoop Dogg - Doggy Dogg Christmas": 'Christmas',
-  "Sia -  Santa's Coming For Us": 'Christmas',
+  "Sia - Santa's Coming For Us": 'Christmas',
+  "The Pretty Reckless - Where Are You Christmas": 'Christmas',
   
   // Pop & Electronic
   "Ajr - Bang!": 'Pop & Electronic',
@@ -55,6 +56,8 @@ const CATEGORY_MAP: Record<string, 'Christmas' | 'Pop & Electronic' | 'Kids' | '
   "Tiesto - The Business": 'Pop & Electronic',
   "Teddy Swims - Lose Control (Tiesto Remix)": 'Pop & Electronic',
   "Major Lazer - Lean On": 'Pop & Electronic',
+  "Alex Warren - Ordinary": 'Pop & Electronic',
+  "Zombic & Felix Schorn - Zombie (Remix)": 'Pop & Electronic',
   
   // Kids
   "Frozen -  Let It Go": 'Kids',

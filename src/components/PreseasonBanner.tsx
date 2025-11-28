@@ -40,8 +40,12 @@ export default function PreseasonBanner(){
   const [sparkles,setSparkles] = useState<Sparkle[] | null>(null);
   const done = useMemo(()=> mounted && parts.days===0 && parts.hours===0 && parts.minutes===0 && parts.seconds===0, [parts, mounted]);
 
-  // No persistence: always show on fresh load.
-  useEffect(()=>{},[]);
+  // Hide banner permanently once countdown reaches zero
+  useEffect(() => {
+    if (done) {
+      setDismissed(true);
+    }
+  }, [done]);
 
   useEffect(()=>{
     if (dismissed) return;
