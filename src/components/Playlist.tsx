@@ -5,7 +5,7 @@ import { useState, useMemo } from 'react';
 const fetcher = (url: string) => fetch(url).then(r => r.json());
 
 // Category mapping: add new sequences here as they're created
-const CATEGORY_MAP: Record<string, 'Christmas' | 'Pop & Electronic' | 'Kids' | 'Other'> = {
+const CATEGORY_MAP: Record<string, 'Christmas' | 'Pop' | 'Electronic' | 'Kids' | 'Other'> = {
   // Christmas
   "Alxxa - It's the Most Wonderful Time of the Year": 'Christmas',
   "Alxxa - It's the Most Wonderful Time of the Year PPD 2025 40fps": 'Christmas',
@@ -27,37 +27,39 @@ const CATEGORY_MAP: Record<string, 'Christmas' | 'Pop & Electronic' | 'Kids' | '
   "Sia - Santa's Coming For Us": 'Christmas',
   "The Pretty Reckless - Where Are You Christmas": 'Christmas',
   
-  // Pop & Electronic
-  "Ajr - Bang!": 'Pop & Electronic',
-  "Chappell Roan - Pink Pony Club": 'Pop & Electronic',
-  "Chappell Roan - Pink Pony Club 2025 40fps": 'Pop & Electronic',
-  "Coldplay - A Sky Full Of Stars": 'Pop & Electronic',
-  "Daft Punk - Pentatonix 2025 40fps": 'Pop & Electronic',
-  "Dua Lipa - Dance The Night": 'Pop & Electronic',
-  "Dua Lipa - Dance The Night 2025 40fps": 'Pop & Electronic',
-  "Dua Lipa - Levitating": 'Pop & Electronic',
-  "Elton John and Dua Lipa - Cold Heart (PNAU Remix)": 'Pop & Electronic',
-  "Flo Rida - My House": 'Pop & Electronic',
-  "Imagine Dragons - Believer": 'Pop & Electronic',
-  "Imagine Dragons - Believer (Long)": 'Pop & Electronic',
-  "Journey - Don't Stop Believin": 'Pop & Electronic',
-  "Jung Kook - Standing Next to You": 'Pop & Electronic',
-  "Jung Kook - Standing Next to You 2025 40fps": 'Pop & Electronic',
-  "Lindsey Stirling - Magic": 'Pop & Electronic',
-  "Majestic x Boney M - Rasputin": 'Pop & Electronic',
-  "Mark Ronson - Uptown Funk": 'Pop & Electronic',
-  "Muse - Supermassive Black Hole": 'Pop & Electronic',
-  "Ruelle - Mad World 2025 40fps": 'Pop & Electronic',
-  "Sabrina Carpenter - Espresso": 'Pop & Electronic',
-  "Sabrina Carpenter - Espresso [Clean] 2025 40fps": 'Pop & Electronic',
-  "Tai Verdes - AOK": 'Pop & Electronic',
-  "The Weeknd - Blinding Lights": 'Pop & Electronic',
-  "The Weeknd feat Ariana Grande - Save Your Tears (Remix) 2025 40fps": 'Pop & Electronic',
-  "Tiesto - The Business": 'Pop & Electronic',
-  "Teddy Swims - Lose Control (Tiesto Remix)": 'Pop & Electronic',
-  "Major Lazer - Lean On": 'Pop & Electronic',
-  "Alex Warren - Ordinary": 'Pop & Electronic',
-  "Zombic & Felix Schorn - Zombie (Remix)": 'Pop & Electronic',
+  // Pop
+  "Ajr - Bang!": 'Pop',
+  "Chappell Roan - Pink Pony Club": 'Pop',
+  "Chappell Roan - Pink Pony Club 2025 40fps": 'Pop',
+  "Coldplay - A Sky Full Of Stars": 'Pop',
+  "Daft Punk - Pentatonix 2025 40fps": 'Pop',
+  "Dua Lipa - Dance The Night": 'Pop',
+  "Dua Lipa - Dance The Night 2025 40fps": 'Pop',
+  "Dua Lipa - Levitating": 'Pop',
+  "Elton John and Dua Lipa - Cold Heart (PNAU Remix)": 'Pop',
+  "Flo Rida - My House": 'Pop',
+  "Imagine Dragons - Believer": 'Pop',
+  "Imagine Dragons - Believer (Long)": 'Pop',
+  "Journey - Don't Stop Believin": 'Pop',
+  "Jung Kook - Standing Next to You": 'Pop',
+  "Jung Kook - Standing Next to You 2025 40fps": 'Pop',
+  "Lindsey Stirling - Magic": 'Pop',
+  "Mark Ronson - Uptown Funk": 'Pop',
+  "Muse - Supermassive Black Hole": 'Pop',
+  "Ruelle - Mad World 2025 40fps": 'Pop',
+  "Sabrina Carpenter - Espresso": 'Pop',
+  "Sabrina Carpenter - Espresso [Clean] 2025 40fps": 'Pop',
+  "Tai Verdes - AOK": 'Pop',
+  "The Weeknd - Blinding Lights": 'Pop',
+  "The Weeknd feat Ariana Grande - Save Your Tears (Remix) 2025 40fps": 'Pop',
+  "Alex Warren - Ordinary": 'Pop',
+  
+  // Electronic
+  "Majestic x Boney M - Rasputin": 'Electronic',
+  "Tiesto - The Business": 'Electronic',
+  "Teddy Swims - Lose Control (Tiesto Remix)": 'Electronic',
+  "Major Lazer - Lean On": 'Electronic',
+  "Zombic & Felix Schorn - Zombie (Remix)": 'Electronic',
   
   // Kids
   "Frozen -  Let It Go": 'Kids',
@@ -74,7 +76,7 @@ const CATEGORY_MAP: Record<string, 'Christmas' | 'Pop & Electronic' | 'Kids' | '
   // "Samuel Kim - Imperial March x Carol of the Bells": 'Christmas',
 };
 
-function categorize(displayName: string): 'Christmas' | 'Pop & Electronic' | 'Kids' | 'Other' {
+function categorize(displayName: string): 'Christmas' | 'Pop' | 'Electronic' | 'Kids' | 'Other' {
   // Try exact match first
   if (CATEGORY_MAP[displayName]) {
     return CATEGORY_MAP[displayName];
@@ -100,7 +102,8 @@ export default function Playlist() {
   const grouped = useMemo(() => {
     const categories: Record<string, any[]> = {
       'Christmas': [],
-      'Pop & Electronic': [],
+      'Pop': [],
+      'Electronic': [],
       'Kids': [],
       'Other': []
     };
@@ -190,7 +193,7 @@ export default function Playlist() {
       
       {(isLoading && !sequences.length) ? (
         <div className="space-y-4">
-          {['Christmas', 'Pop & Electronic', 'Kids', 'Other'].map(cat => (
+          {['Christmas', 'Pop', 'Electronic', 'Kids', 'Other'].map(cat => (
             <div key={cat} className="animate-pulse">
               <div className="h-10 bg-neutral-200 dark:bg-neutral-800 rounded-lg mb-2" />
               <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -203,7 +206,7 @@ export default function Playlist() {
         </div>
       ) : (
         <div className="space-y-4">
-          {(['Christmas', 'Pop & Electronic', 'Kids', 'Other'] as const).map(cat => {
+          {(['Christmas', 'Pop', 'Electronic', 'Kids', 'Other'] as const).map(cat => {
             const songs = grouped[cat];
             const isExpanded = expandedCategories.has(cat);
             if (songs.length === 0) return null;
