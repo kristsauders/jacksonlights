@@ -1,6 +1,5 @@
 "use client";
-import { useState, Suspense } from 'react';
-import dynamic from 'next/dynamic';
+import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 interface Fact { title:string; body:string; }
@@ -207,8 +206,6 @@ function PixelFrameBits(){
   );
 }
 
-const ModelViewer = dynamic(()=>import('./ModelViewer'), { ssr:false, loading: () => <div className="h-[420px] flex items-center justify-center text-xs text-neutral-500">Loading 3D Model...</div> });
-
 export default function ShowInfo(){
   const [openKey,setOpenKey] = useState<string | null>('leds');
   return (
@@ -250,31 +247,22 @@ export default function ShowInfo(){
         </div>
       </section>
 
-      {/* 3D Model + Build Process */}
-      <section className="relative rounded-2xl overflow-hidden ring-1 ring-brand-maroon/15 dark:ring-brand-pine/30 bg-gradient-to-br from-white/70 via-brand-cream/50 to-brand-gold/30 dark:from-neutral-900/60 dark:via-brand-pine/40 dark:to-brand-green/25 p-6 md:p-10 space-y-12">
-        <div className="max-w-6xl mx-auto grid gap-10 lg:grid-cols-2 items-start">
-          <div>
-            <h3 className="text-xl md:text-2xl font-bold mb-4 tracking-tight bg-gradient-to-r from-brand-red via-brand-gold to-brand-green bg-clip-text text-transparent">House Layout (3D)</h3>
-            <p className="text-xs md:text-sm text-neutral-600 dark:text-neutral-400 mb-3">The model used in sequencing to visualize effects before any real pixels turn on.</p>
-            <Suspense fallback={<div className="h-[420px] flex items-center justify-center text-xs text-neutral-500">Loading 3D...</div>}>
-              <ModelViewer />
-            </Suspense>
-          </div>
-          <div>
-            <h3 className="text-xl md:text-2xl font-bold mb-6 tracking-tight bg-gradient-to-r from-brand-red via-brand-gold to-brand-green bg-clip-text text-transparent">How A Holiday Light Show Gets Built</h3>
-            <ol className="relative border-l border-neutral-300 dark:border-neutral-700 ml-3 space-y-10">
-              {buildSteps.map(step => (
-                <li key={step.id} className="pl-6 group">
-                  <span className="absolute -left-[9px] top-1.5 w-4 h-4 rounded-full bg-brand-green ring-4 ring-white dark:ring-neutral-950 shadow" />
-                  <h4 className="font-semibold text-sm flex items-center gap-2">
-                    <span className="text-[11px] px-1.5 py-0.5 rounded bg-brand-green text-white shadow-sm">{step.id}</span>
-                    {step.title}
-                  </h4>
-                  <p className="mt-2 text-xs md:text-sm text-neutral-600 dark:text-neutral-400 leading-relaxed max-w-prose">{step.desc}</p>
-                </li>
-              ))}
-            </ol>
-          </div>
+      {/* Build Process */}
+      <section className="relative rounded-2xl overflow-hidden ring-1 ring-brand-maroon/15 dark:ring-brand-pine/30 bg-gradient-to-br from-white/70 via-brand-cream/50 to-brand-gold/30 dark:from-neutral-900/60 dark:via-brand-pine/40 dark:to-brand-green/25 p-6 md:p-10 space-y-6">
+        <div className="max-w-4xl mx-auto">
+          <h3 className="text-xl md:text-2xl font-bold mb-6 tracking-tight bg-gradient-to-r from-brand-red via-brand-gold to-brand-green bg-clip-text text-transparent">How A Holiday Light Show Gets Built</h3>
+          <ol className="relative border-l border-neutral-300 dark:border-neutral-700 ml-3 space-y-10">
+            {buildSteps.map(step => (
+              <li key={step.id} className="pl-6 group">
+                <span className="absolute -left-[9px] top-1.5 w-4 h-4 rounded-full bg-brand-green ring-4 ring-white dark:ring-neutral-950 shadow" />
+                <h4 className="font-semibold text-sm flex items-center gap-2">
+                  <span className="text-[11px] px-1.5 py-0.5 rounded bg-brand-green text-white shadow-sm">{step.id}</span>
+                  {step.title}
+                </h4>
+                <p className="mt-2 text-xs md:text-sm text-neutral-600 dark:text-neutral-400 leading-relaxed max-w-prose">{step.desc}</p>
+              </li>
+            ))}
+          </ol>
         </div>
       </section>
 
