@@ -2,6 +2,7 @@
 interface Video { id: string; title: string; description?: string; }
 
 const videos: Video[] = [
+  { id: '6GcqgGBDs8w', title: '2025 Show'},
   { id: 'y-hlHrKudu4', title: '2024 Main Show' },
   { id: 'MYDBp6gIzjg', title: '2024 Kids Show' }
 ];
