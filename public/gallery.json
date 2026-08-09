@@ -1,10 +1,10 @@
 [
   {
-    "src": "/photos/1.jpg",
+    "src": "/photos/optimized/1.webp",
     "alt": "1"
   },
   {
-    "src": "/photos/2.jpg",
+    "src": "/photos/optimized/2.webp",
     "alt": "2"
   }
 ]

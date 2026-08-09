@@ -1,17 +1,30 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { promises as fs } from 'fs';
-import path from 'path';
+import { updateJson } from '../../../../src/lib/jsonStore';
+import { rateLimit } from '../../../../src/lib/rateLimit';
 
-interface Metrics { visits:number; lastVisitAt?:string; }
+interface Metrics {
+  visits: number;
+  lastVisitAt?: string;
+}
 
-const metricsPath = path.join(process.cwd(), 'data', 'metrics.json');
-async function readMetrics(): Promise<Metrics> { try { return JSON.parse(await fs.readFile(metricsPath,'utf8')); } catch { return { visits:0 }; } }
-async function writeMetrics(m:Metrics){ await fs.writeFile(metricsPath, JSON.stringify(m,null,2),'utf8'); }
+const FILE = 'metrics.json';
 
-export async function POST(){
-  const metrics = await readMetrics();
-  metrics.visits += 1;
-  metrics.lastVisitAt = new Date().toISOString();
-  await writeMetrics(metrics);
-  return NextResponse.json({ ok:true });
+export const dynamic = 'force-dynamic';
+
+export async function POST(req: NextRequest) {
+  // Count at most a few visits per IP per hour. Without this the counter was a
+  // free write-amplification endpoint: one curl loop could inflate it forever
+  // and hammer the disk doing it.
+  const limited = rateLimit(req, 'visit', 5, 60 * 60_000);
+  if (limited) {
+    // Quietly succeed rather than surfacing a 429 for a fire-and-forget ping.
+    return NextResponse.json({ ok: true });
+  }
+
+  await updateJson<Metrics>(FILE, { visits: 0 }, (m) => ({
+    visits: (m.visits ?? 0) + 1,
+    lastVisitAt: new Date().toISOString(),
+  }));
+
+  return NextResponse.json({ ok: true });
 }

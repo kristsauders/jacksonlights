@@ -11,20 +11,22 @@ interface PostItem {
 }
 
 function PostMedia({ post }: { post: PostItem }) {
+  // Hook must run before any early return — React requires the same hook order
+  // on every render of a component.
+  const [orientation, setOrientation] = useState<'portrait' | 'landscape' | 'square' | null>(null);
+
   if (post.type === 'image') {
     return (
       <img
         src={post.src}
         alt={post.alt}
         loading="lazy"
+        decoding="async"
         className="rounded-md w-full h-auto object-cover max-h-[80vh] select-none"
       />
     );
   }
 
-  const [orientation, setOrientation] = useState<'portrait' | 'landscape' | 'square' | null>(null);
-
-  const isMov = post.src.toLowerCase().endsWith('.mov');
   const wrapperBase =
     'relative w-full mx-auto transition-all';
   const wrapperClass =

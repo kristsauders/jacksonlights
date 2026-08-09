@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { readFile, stat } from 'fs/promises';
 import path from 'path';
+import { isValidMediaFilename, resolveInside } from '../../../../../src/lib/safePath';
 
 const MIME_TYPES: Record<string, string> = {
   '.jpg': 'image/jpeg',
@@ -18,36 +19,39 @@ export async function GET(
 ) {
   try {
     const { filename } = await params;
-    
-    // Security: prevent directory traversal
-    if (filename.includes('..') || filename.includes('/') || filename.includes('\\')) {
+
+    // Only serve names in the exact shape the upload route produces. This
+    // rejects traversal, dotfiles, and the sibling .json metadata files (which
+    // the old extension-agnostic version happily served).
+    if (!isValidMediaFilename(filename)) {
       return new NextResponse('Invalid filename', { status: 400 });
     }
 
     const postsDir = path.join(process.cwd(), 'public', 'posts');
-    const filePath = path.join(postsDir, filename);
+    const filePath = resolveInside(postsDir, filename);
+    if (!filePath) return new NextResponse('Invalid filename', { status: 400 });
 
-    // Check if file exists
     try {
-      await stat(filePath);
+      const info = await stat(filePath);
+      if (!info.isFile()) return new NextResponse('File not found', { status: 404 });
     } catch {
       return new NextResponse('File not found', { status: 404 });
     }
 
-    // Read the file
     const fileBuffer = await readFile(filePath);
-    
-    // Determine content type
     const ext = path.extname(filename).toLowerCase();
-    const contentType = MIME_TYPES[ext] || 'application/octet-stream';
+    const contentType = MIME_TYPES[ext] ?? 'application/octet-stream';
 
-    // Return the file with appropriate headers
     return new NextResponse(fileBuffer as any, {
       status: 200,
       headers: {
         'Content-Type': contentType,
+        // Filenames are content-addressed by upload time, so they never change.
         'Cache-Control': 'public, max-age=31536000, immutable',
         'Content-Length': fileBuffer.length.toString(),
+        // Stop the browser from re-interpreting a file as something more
+        // dangerous than the Content-Type we declared.
+        'X-Content-Type-Options': 'nosniff',
       },
     });
   } catch (error) {

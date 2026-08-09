@@ -1,11 +1,93 @@
 /** @type {import('next').NextConfig} */
+
+const isDev = process.env.NODE_ENV !== 'production';
+
+// Content Security Policy.
+//
+// script-src still needs 'unsafe-inline': next-themes injects an inline script
+// to set the theme class before paint, styled-jsx emits inline <style>, and the
+// JSON-LD block in app/layout.tsx is inline. Even so, this policy blocks the
+// things that actually matter here — loading script from another origin,
+// framing the site, rewriting <base>, and posting forms off-site.
+// Tightening to a nonce-based policy means routing every request through
+// middleware; see README for that upgrade path.
+const csp = [
+  "default-src 'self'",
+  `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ''}`,
+  "style-src 'self' 'unsafe-inline'",
+  "img-src 'self' data: blob: https://i.ytimg.com https://img.youtube.com",
+  "media-src 'self' blob:",
+  "font-src 'self' data:",
+  // ws: in dev only, for the Next.js hot-reload socket.
+  `connect-src 'self'${isDev ? ' ws: http://localhost:*' : ''}`,
+  // YouTube embeds in VideoGallery.
+  "frame-src https://www.youtube-nocookie.com https://www.youtube.com",
+  "object-src 'none'",
+  "base-uri 'self'",
+  "form-action 'self'",
+  "frame-ancestors 'none'",
+  'upgrade-insecure-requests',
+].join('; ');
+
+const securityHeaders = [
+  { key: 'Content-Security-Policy', value: csp },
+  // Front Door terminates TLS; this tells browsers never to try plain HTTP.
+  { key: 'Strict-Transport-Security', value: 'max-age=63072000; includeSubDomains; preload' },
+  { key: 'X-Content-Type-Options', value: 'nosniff' },
+  { key: 'X-Frame-Options', value: 'DENY' },
+  { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
+  { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=(), payment=(), interest-cohort=()' },
+  { key: 'Cross-Origin-Opener-Policy', value: 'same-origin' },
+];
+
 const nextConfig = {
   outputFileTracingRoot: process.cwd(),
+  // Don't advertise the framework version to scanners.
+  poweredByHeader: false,
+  reactStrictMode: true,
   images: {
+    // Serve modern formats to browsers that accept them.
+    formats: ['image/avif', 'image/webp'],
     remotePatterns: [
       { protocol: 'https', hostname: 'i.ytimg.com' },
       { protocol: 'https', hostname: 'img.youtube.com' }
     ]
-  }
+  },
+  experimental: {
+    // Tree-shake these to the icons/components actually imported.
+    optimizePackageImports: ['framer-motion', 'recharts']
+  },
+  async headers() {
+    return [
+      {
+        source: '/:path*',
+        headers: securityHeaders,
+      },
+      {
+        // Photos and icons are content that only changes when redeployed, so
+        // let Front Door and the browser hold on to them.
+        source: '/photos/:path*',
+        headers: [{ key: 'Cache-Control', value: 'public, max-age=3600, s-maxage=86400, stale-while-revalidate=604800' }],
+      },
+      {
+        source: '/icons/:path*',
+        headers: [{ key: 'Cache-Control', value: 'public, max-age=86400, s-maxage=604800, immutable' }],
+      },
+      {
+        source: '/models/:path*',
+        headers: [{ key: 'Cache-Control', value: 'public, max-age=86400, s-maxage=604800' }],
+      },
+      {
+        source: '/gallery.json',
+        headers: [{ key: 'Cache-Control', value: 'public, max-age=300, s-maxage=3600, stale-while-revalidate=86400' }],
+      },
+      {
+        // The service worker must never be cached, or a bad one is permanent.
+        source: '/sw.js',
+        headers: [{ key: 'Cache-Control', value: 'no-cache, no-store, must-revalidate' }],
+      },
+    ];
+  },
 };
+
 export default nextConfig;

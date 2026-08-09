@@ -34,6 +34,9 @@ function getJwt(): string {
   return cachedToken.token;
 }
 
+// Don't let a hung upstream hold a request (and an App Service worker) open.
+const UPSTREAM_TIMEOUT_MS = 8_000;
+
 async function rfFetch(path: string, init?: RequestInit) {
   const token = getJwt();
   const res = await fetch(`${API_BASE}${path}`, {
@@ -43,11 +46,14 @@ async function rfFetch(path: string, init?: RequestInit) {
       'Content-Type': 'application/json',
       ...(init?.headers || {})
     },
-    cache: 'no-store'
+    cache: 'no-store',
+    signal: AbortSignal.timeout(UPSTREAM_TIMEOUT_MS)
   });
   if (!res.ok) {
-    const text = await res.text();
-    throw new Error(`Remote Falcon error ${res.status}: ${text}`);
+    // Body text is kept for the server log only — callers turn this into a
+    // generic message so upstream detail never reaches the browser.
+    const text = await res.text().catch(() => '');
+    throw new Error(`Remote Falcon error ${res.status}: ${text.slice(0, 500)}`);
   }
   return res.json();
 }

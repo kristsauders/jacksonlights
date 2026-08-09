@@ -1,56 +1,61 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { verifyAdminToken } from '../../../../src/lib/adminAuth';
+import { ADMIN_COOKIE, verifyAdminToken } from '../../../../src/lib/adminAuth';
+import { isValidMediaFilename, isValidPostId, resolveInside } from '../../../../src/lib/safePath';
 import path from 'path';
-import { readdir, readFile, unlink } from 'fs/promises';
+import { readFile, unlink } from 'fs/promises';
 
-interface PostMetadata { 
-  id: string; 
-  filename: string; 
-  type: 'image' | 'video'; 
-  alt: string; 
-  createdAt: string; 
+interface PostMetadata {
+  id: string;
+  filename: string;
+  type: 'image' | 'video';
+  alt: string;
+  createdAt: string;
 }
 
+export const dynamic = 'force-dynamic';
+
 export async function POST(req: NextRequest) {
-  const token = req.cookies.get('admin_token')?.value;
-  if (!verifyAdminToken(token)) return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
-  
+  const token = req.cookies.get(ADMIN_COOKIE)?.value;
+  if (!verifyAdminToken(token)) {
+    return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
+  }
+
   try {
     const { id } = await req.json();
-    if (!id) return NextResponse.json({ message: 'Missing id' }, { status: 400 });
-    
-    const publicDir = path.join(process.cwd(), 'public');
-    const postsDir = path.join(publicDir, 'posts');
-    
-    // Read the metadata file
-    const metadataPath = path.join(postsDir, `${id}.json`);
+    // `id` used to be interpolated straight into a path, so a body of
+    // {"id":"../../something"} deleted arbitrary files. Only ever accept ids
+    // in the exact shape the upload route generates.
+    if (!isValidPostId(id)) {
+      return NextResponse.json({ message: 'Invalid id' }, { status: 400 });
+    }
+
+    const postsDir = path.join(process.cwd(), 'public', 'posts');
+    const metadataPath = resolveInside(postsDir, `${id}.json`);
+    if (!metadataPath) {
+      return NextResponse.json({ message: 'Invalid id' }, { status: 400 });
+    }
+
     let metadata: PostMetadata;
-    
     try {
-      const content = await readFile(metadataPath, 'utf8');
-      metadata = JSON.parse(content);
+      metadata = JSON.parse(await readFile(metadataPath, 'utf8'));
     } catch {
       return NextResponse.json({ message: 'Post not found' }, { status: 404 });
     }
-    
-    // Delete the media file
-    const mediaPath = path.join(postsDir, metadata.filename);
-    try {
-      await unlink(mediaPath);
-    } catch {
-      // File might already be deleted, continue
+
+    // The filename comes out of a file on disk, but validate it anyway — the
+    // metadata is only as trustworthy as whatever wrote it.
+    if (isValidMediaFilename(metadata.filename)) {
+      const mediaPath = resolveInside(postsDir, metadata.filename);
+      if (mediaPath) {
+        // Media file may already be gone; that isn't an error.
+        await unlink(mediaPath).catch(() => {});
+      }
     }
-    
-    // Delete the metadata JSON file
-    try {
-      await unlink(metadataPath);
-    } catch {
-      // File might already be deleted
-    }
-    
-    // Trigger event to refresh PostsFeed
+
+    await unlink(metadataPath).catch(() => {});
+
     return NextResponse.json({ ok: true });
-  } catch (e: any) {
+  } catch (e) {
     console.error('Delete failed:', e);
     return NextResponse.json({ message: 'Delete failed' }, { status: 500 });
   }

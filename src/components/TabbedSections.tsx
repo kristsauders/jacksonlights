@@ -1,15 +1,34 @@
 "use client";
 import { useState, useEffect } from 'react';
+import dynamic from 'next/dynamic';
 import Tabs from './Tabs';
 import Playlist from './Playlist';
-import PhotoCarousel from './PhotoCarousel';
-import VideoGallery from './VideoGallery';
-import ShowInfo from './ShowInfo';
-import PostsFeed from './PostsFeed';
-import Donate from './Donate';
-import SongRequests from './SongRequests';
-import { FeedbackForm } from './'; 
-import { AdminDashboard } from './AdminDashboard';
+
+// Only the default tab (Playlist) is part of the initial bundle. Everything
+// else is fetched when its tab is first opened.
+//
+// This matters most for AdminDashboard: it imports recharts, so every visitor
+// was downloading a charting library to render a dashboard only the family can
+// see. ShowInfo, PostsFeed and the gallery panels are similarly large.
+const panelLoading = () => (
+  <div className="animate-pulse space-y-3 py-4" aria-hidden="true">
+    <div className="h-6 w-1/3 rounded bg-neutral-200 dark:bg-neutral-800" />
+    <div className="h-4 w-full rounded bg-neutral-200 dark:bg-neutral-800" />
+    <div className="h-4 w-5/6 rounded bg-neutral-200 dark:bg-neutral-800" />
+  </div>
+);
+
+const PhotoCarousel = dynamic(() => import('./PhotoCarousel'), { loading: panelLoading });
+const VideoGallery = dynamic(() => import('./VideoGallery'), { loading: panelLoading });
+const ShowInfo = dynamic(() => import('./ShowInfo'), { loading: panelLoading });
+const PostsFeed = dynamic(() => import('./PostsFeed'), { loading: panelLoading });
+const Donate = dynamic(() => import('./Donate'), { loading: panelLoading });
+const SongRequests = dynamic(() => import('./SongRequests'), { loading: panelLoading });
+const FeedbackForm = dynamic(() => import('./FeedbackForm'), { loading: panelLoading });
+const AdminDashboard = dynamic(
+  () => import('./AdminDashboard').then((m) => m.AdminDashboard),
+  { loading: panelLoading, ssr: false }
+);
 
 export default function TabbedSections(){
   const [active,setActive] = useState('playlist');
@@ -91,7 +110,7 @@ function AdminAuthSection({ password, setPassword, state, setState, error, setEr
   }
   return (
     <form onSubmit={login} className="flex items-center gap-3 flex-wrap">
-      <input type="password" value={password} onChange={e=>setPassword(e.target.value)} placeholder="Admin password" className="text-sm px-3 py-2 rounded-md border border-neutral-300 dark:border-neutral-700 bg-white/80 dark:bg-neutral-900/60 focus-ring" />
+      <input type="password" value={password} onChange={e=>setPassword(e.target.value)} placeholder="Admin password" className="text-sm px-3 py-2 rounded-md border border-neutral-300 dark:border-neutral-700 bg-white/80 dark:bg-neutral-900/60 focus-ring" autoComplete="current-password" />
       <button disabled={state==='logging'} className="text-sm px-4 py-2 rounded-md bg-brand-green text-white font-medium disabled:opacity-60">{state==='logging'? 'Logging in...':'Login'}</button>
       {state==='error' && <span className="text-xs text-red-600 dark:text-red-400">{error}</span>}
     </form>

@@ -7,3 +7,7 @@ pnpm-lock.yaml
 /gallery.json
 /public/posts/
 /data/
+# Generated from public/photos by scripts/generate-gallery.mjs at build time
+/public/photos/optimized/
+# TypeScript incremental build cache
+tsconfig.tsbuildinfo

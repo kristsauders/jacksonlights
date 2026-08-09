@@ -1,66 +1,112 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { verifyAdminToken } from '../../../../src/lib/adminAuth';
+import { randomBytes } from 'crypto';
+import { ADMIN_COOKIE, verifyAdminToken } from '../../../../src/lib/adminAuth';
+import { resolveInside } from '../../../../src/lib/safePath';
 import { mkdir, writeFile } from 'fs/promises';
 import path from 'path';
 
-interface PostMetadata { 
-  id: string; 
-  filename: string; 
-  type: 'image' | 'video'; 
-  alt: string; 
-  createdAt: string; 
+interface PostMetadata {
+  id: string;
+  filename: string;
+  type: 'image' | 'video';
+  alt: string;
+  createdAt: string;
 }
 
-export async function POST(req: NextRequest){
-  // Auth check
-  const token = req.cookies.get('admin_token')?.value;
-  if (!verifyAdminToken(token)) return NextResponse.json({ message:'Unauthorized' }, { status:401 });
+const MAX_BYTES = 200 * 1024 * 1024; // 200MB
+const MAX_CAPTION = 140;
+
+export const dynamic = 'force-dynamic';
+
+type Detected = { ext: string; mime: string; type: 'image' | 'video' };
+
+/**
+ * Identify the file from its leading bytes rather than the client-supplied
+ * `file.type`, which is just a header in the multipart body and can claim
+ * anything. The extension we store is derived from what the bytes actually
+ * are, so an HTML or script payload can never land on disk as ".png".
+ */
+function detectType(buf: Buffer): Detected | null {
+  const startsWith = (...bytes: number[]) =>
+    bytes.every((b, i) => buf[i] === b);
+
+  if (startsWith(0xff, 0xd8, 0xff)) return { ext: '.jpg', mime: 'image/jpeg', type: 'image' };
+  if (startsWith(0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a)) {
+    return { ext: '.png', mime: 'image/png', type: 'image' };
+  }
+  if (buf.length > 12 && buf.toString('ascii', 0, 4) === 'RIFF' && buf.toString('ascii', 8, 12) === 'WEBP') {
+    return { ext: '.webp', mime: 'image/webp', type: 'image' };
+  }
+  if (startsWith(0x1a, 0x45, 0xdf, 0xa3)) {
+    return { ext: '.webm', mime: 'video/webm', type: 'video' };
+  }
+  // ISO base media format: a 'ftyp' box sits at offset 4. The brand that
+  // follows tells MOV (QuickTime) apart from MP4.
+  if (buf.length > 12 && buf.toString('ascii', 4, 8) === 'ftyp') {
+    const brand = buf.toString('ascii', 8, 12);
+    if (brand.startsWith('qt')) return { ext: '.mov', mime: 'video/quicktime', type: 'video' };
+    return { ext: '.mp4', mime: 'video/mp4', type: 'video' };
+  }
+  return null;
+}
+
+export async function POST(req: NextRequest) {
+  const token = req.cookies.get(ADMIN_COOKIE)?.value;
+  if (!verifyAdminToken(token)) {
+    return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
+  }
+
   try {
     const form = await req.formData();
     const file = form.get('file');
-    const caption = (form.get('caption') || '') as string;
-    if (!file || !(file instanceof File)) return NextResponse.json({ message:'File required' }, { status:400 });
-    const allowed = ['image/jpeg','image/png','image/webp','video/mp4','video/quicktime','video/webm'];
-    if (!allowed.includes(file.type)) return NextResponse.json({ message:'Unsupported file type' }, { status:400 });
-    const MAX_BYTES = 200 * 1024 * 1024; // 200MB
-    if (file.size > MAX_BYTES) return NextResponse.json({ message:'File too large (max 200MB)' }, { status:400 });
+    const rawCaption = form.get('caption');
+    const caption = typeof rawCaption === 'string' ? rawCaption.slice(0, MAX_CAPTION).trim() : '';
 
-    const isVideo = file.type.startsWith('video/');
-    const extMap: Record<string,string> = { 
-      'image/jpeg':'.jpg',
-      'image/png':'.png',
-      'image/webp':'.webp',
-      'video/mp4':'.mp4',
-      'video/quicktime':'.mov',
-      'video/webm':'.webm' 
-    };
-    
-    const id = Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
-    const filename = id + extMap[file.type];
-    const publicDir = path.join(process.cwd(), 'public');
-    const postsDir = path.join(publicDir, 'posts');
+    if (!file || !(file instanceof File)) {
+      return NextResponse.json({ message: 'File required' }, { status: 400 });
+    }
+    // Check size before reading the body into memory.
+    if (file.size > MAX_BYTES) {
+      return NextResponse.json({ message: 'File too large (max 200MB)' }, { status: 400 });
+    }
+
+    const buffer = Buffer.from(await file.arrayBuffer());
+    const detected = detectType(buffer);
+    if (!detected) {
+      return NextResponse.json(
+        { message: 'Unsupported file type (JPEG, PNG, WebP, MP4, MOV or WebM only)' },
+        { status: 400 }
+      );
+    }
+
+    const id = Date.now().toString(36) + randomBytes(5).toString('hex');
+    const filename = id + detected.ext;
+
+    const postsDir = path.join(process.cwd(), 'public', 'posts');
+    const mediaPath = resolveInside(postsDir, filename);
+    const metaPath = resolveInside(postsDir, `${id}.json`);
+    if (!mediaPath || !metaPath) {
+      return NextResponse.json({ message: 'Upload failed' }, { status: 500 });
+    }
+
     await mkdir(postsDir, { recursive: true });
-    
-    // Write media file
-    const arrayBuffer = await file.arrayBuffer();
-    await writeFile(path.join(postsDir, filename), Buffer.from(arrayBuffer));
+    await writeFile(mediaPath, buffer);
 
-    // Write metadata JSON file (same name but .json extension)
-    const createdAt = new Date().toISOString();
-    const metadata: PostMetadata = { 
-      id, 
-      filename, 
-      type: isVideo ? 'video' : 'image', 
-      alt: caption || (isVideo ? 'Uploaded video' : 'Uploaded image'), 
-      createdAt 
+    const metadata: PostMetadata = {
+      id,
+      filename,
+      type: detected.type,
+      alt: caption || (detected.type === 'video' ? 'Uploaded video' : 'Uploaded image'),
+      createdAt: new Date().toISOString(),
     };
-    await writeFile(
-      path.join(postsDir, `${id}.json`), 
-      JSON.stringify(metadata, null, 2)
-    );
+    await writeFile(metaPath, JSON.stringify(metadata, null, 2));
 
-    return NextResponse.json({ ok: true, item: { ...metadata, src: `/api/posts/media/${filename}` } });
-  } catch (e: any) {
+    return NextResponse.json({
+      ok: true,
+      item: { ...metadata, src: `/api/posts/media/${filename}` },
+    });
+  } catch (e) {
+    console.error('Upload failed:', e);
     return NextResponse.json({ message: 'Upload failed' }, { status: 500 });
   }
 }

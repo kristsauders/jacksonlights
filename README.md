@@ -46,6 +46,36 @@ The serverless API routes (`/api/request`, `/api/vote`) proxy to Remote Falcon w
 ## Audio Stream
 Replace `/public/audio/stream-placeholder.mp3` or point the `<audio>` src in `ShowStatus` to your actual stream (Icecast/Shoutcast/etc). If using an HLS stream, consider `hls.js` for broader support.
 
+## Security & Hosting Notes
+
+### Required environment variables
+See `.env.example`. `ADMIN_PASSWORD` **must** be set in Azure App Service
+Application Settings — the admin API fails closed without it. Prefer also
+setting a separate `ADMIN_JWT_SECRET`.
+
+### Locking the origin to Front Door
+Rate limiting and abuse controls key off the client IP taken from the
+`X-Azure-ClientIP` / `X-Forwarded-For` headers. Those headers are only
+trustworthy if the App Service can't be reached directly — otherwise anyone
+can hit `<app>.azurewebsites.net` and set them to whatever they like.
+
+In the App Service: **Networking → Access restrictions**, add a rule allowing
+service tag `AzureFrontDoor.Backend`, matching the header
+`X-Azure-FDID` against your Front Door profile's ID, and deny everything else.
+
+### Content Security Policy
+Set in `next.config.js`. `script-src` still allows `'unsafe-inline'` because
+next-themes, styled-jsx and the JSON-LD block all emit inline content. Moving
+to a nonce-based policy requires a `middleware.ts` that generates a per-request
+nonce and passes it to `ThemeProvider`; worth doing if the site ever accepts
+richer user-generated content.
+
+### Data files
+`data/*.json` is created on demand and written atomically (temp file + rename),
+with per-file serialisation so concurrent submissions can't clobber each other.
+These live on the App Service filesystem — take a copy before any operation
+that resets it.
+
 ## Potential Enhancements
 - Persist user votes / feedback locally
 - Add map with location (Leaflet) respecting privacy

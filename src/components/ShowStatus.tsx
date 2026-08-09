@@ -1,12 +1,10 @@
 "use client";
 import useSWR from 'swr';
 import { motion } from 'framer-motion';
-import AudioVisualizer from './AudioVisualizer';
-
-const fetcher = (url: string) => fetch(url).then(r => r.json());
+import { fetcher, statusSwrConfig } from '../lib/swr';
 
 export default function ShowStatus() {
-  const { data, error, isLoading } = useSWR('/api/status', fetcher, { refreshInterval: 15000 });
+  const { data, error, isLoading } = useSWR('/api/status', fetcher, statusSwrConfig);
 
   if (error) return <div role="alert" className="text-red-600">Error loading status</div>;
   if (isLoading || !data) return <div className="animate-pulse text-sm">Loading status…</div>;

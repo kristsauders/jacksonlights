@@ -2,7 +2,11 @@
 @tailwind components;
 @tailwind utilities;
 
-html { scroll-behavior: smooth; }
+/* Respect users who ask for less motion — smooth scrolling makes some people
+   motion sick, and it also fights with programmatic scroll restoration. */
+@media (prefers-reduced-motion: no-preference) {
+  html { scroll-behavior: smooth; }
+}
 
 ::-webkit-scrollbar { width: 10px; }
 ::-webkit-scrollbar-track { background: transparent; }
@@ -13,4 +17,35 @@ body { font-feature-settings: 'ss01' on; }
 
 .focus-ring { @apply focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-gold focus-visible:ring-offset-2; }
 
-@keyframes twinkleShift { 0% { background-position: 0 0; } 100% { background-position: 24px 24px; } }
+/* Twinkling dot backdrop.
+   Two changes from the original, both for scroll smoothness:
+   1. `fixed` instead of `absolute inset-0` inside <main>. The old layer was as
+      tall as the entire document, so the browser kept a full-page-sized
+      texture around and repainted it.
+   2. The animation moves the layer with `transform` rather than
+      `background-position`. background-position repaints the layer every
+      frame; transform is handled entirely by the compositor. */
+.twinkle-layer {
+  position: fixed;
+  /* Overscan by one tile so the translate never exposes an edge. */
+  inset: -24px;
+  z-index: 0;
+  pointer-events: none;
+  background-image: radial-gradient(circle at 1px 1px, rgba(255, 255, 255, 0.35) 1px, transparent 0);
+  background-size: 24px 24px;
+  opacity: 0.15;
+}
+
+.dark .twinkle-layer { opacity: 0.3; }
+
+@media (prefers-reduced-motion: no-preference) {
+  .dark .twinkle-layer {
+    animation: twinkleShift 40s linear infinite;
+    will-change: transform;
+  }
+}
+
+@keyframes twinkleShift {
+  from { transform: translate3d(0, 0, 0); }
+  to { transform: translate3d(24px, 24px, 0); }
+}

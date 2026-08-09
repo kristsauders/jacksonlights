@@ -1,6 +1,9 @@
 import { NextResponse } from 'next/server';
 import { readdir, readFile } from 'fs/promises';
 import path from 'path';
+import { isValidMediaFilename } from '../../../src/lib/safePath';
+
+export const dynamic = 'force-dynamic';
 
 interface PostMetadata { 
   id: string; 
@@ -39,10 +42,14 @@ export async function GET() {
       try {
         const content = await readFile(path.join(postsDir, jsonFile), 'utf8');
         const metadata: PostMetadata = JSON.parse(content);
-        
+
+        // Skip anything whose filename wouldn't be servable by the media route
+        // anyway, so the feed never renders a permanently broken tile.
+        if (!isValidMediaFilename(metadata.filename)) continue;
+
         // Check if the corresponding media file exists
         const mediaExists = files.includes(metadata.filename);
-        
+
         if (mediaExists) {
           posts.push({
             id: metadata.id,

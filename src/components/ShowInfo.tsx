@@ -1,5 +1,5 @@
 "use client";
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 interface Fact { title:string; body:string; }
@@ -65,9 +65,13 @@ function PixelChainDemo(){
           ))}
         </div>
         <style jsx>{`
+          /* Animate opacity only. The previous keyframes also animated
+             filter: saturate() across all 48 nodes, which forces a repaint of
+             every node on every frame — enough to make the whole page stutter
+             while scrolling on a phone. Opacity is composited on the GPU. */
           @keyframes pixelWavePulse {
-            0%, 70%, 100% { opacity: .22; filter: saturate(.25); }
-            5% { opacity: 1; filter: saturate(1); }
+            0%, 70%, 100% { opacity: .22; }
+            5% { opacity: 1; }
             15% { opacity: .45; }
           }
           .pixel-wave {
@@ -75,6 +79,10 @@ function PixelChainDemo(){
             --c1: #BF2C31; --c2:#E2C044; --c3:#119B68;
             animation: pixelWavePulse 6s linear infinite;
             animation-delay: calc(var(--i) * 0.12s);
+            will-change: opacity;
+          }
+          @media (prefers-reduced-motion: reduce) {
+            .pixel-wave { animation: none; opacity: .6; }
           }
         `}</style>
       </div>
@@ -161,8 +169,14 @@ function NetworkDiagram(){
 
 function PixelFrameBits(){
   const [color,setColor] = useState(()=>({r:173,g:46,b:255}));
-  // rotate color every few seconds
-  useState(()=>{
+  // Rotate the colour every few seconds.
+  //
+  // This was previously written as useState(() => { setInterval(...); return
+  // cleanup }), which React never calls back — the returned function was just
+  // stored as state. The interval therefore survived unmounting and kept
+  // re-rendering this subtree every 2s for the life of the page, even after
+  // switching away from the About Us tab. useEffect actually runs the cleanup.
+  useEffect(()=>{
     const id = setInterval(()=>{
       setColor({
         r: Math.floor(Math.random()*256),
@@ -170,8 +184,8 @@ function PixelFrameBits(){
         b: Math.floor(Math.random()*256)
       });
     }, 2000);
-    return () => clearInterval(id);
-  });
+    return ()=> clearInterval(id);
+  },[]);
   const toBits = (v:number) => v.toString(2).padStart(8,'0').split('').map(b=> Number(b));
   const rb = toBits(color.r); const gb = toBits(color.g); const bb = toBits(color.b);
   const hex = `#${[color.r,color.g,color.b].map(v=> v.toString(16).padStart(2,'0')).join('')}`.toUpperCase();

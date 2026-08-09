@@ -1,8 +1,7 @@
 "use client";
 import useSWR from 'swr';
 import { useState, useMemo } from 'react';
-
-const fetcher = (url: string) => fetch(url).then(r => r.json());
+import { fetcher, statusSwrConfig } from '../lib/swr';
 
 // Category mapping: add new sequences here as they're created
 const CATEGORY_MAP: Record<string, 'Christmas' | 'Pop' | 'Electronic' | 'Kids' | 'Other'> = {
@@ -89,7 +88,7 @@ function categorize(displayName: string): 'Christmas' | 'Pop' | 'Electronic' | '
 
 export default function Playlist() {
   // Hooks must always run in consistent order – keep all before any conditional returns
-  const { data, error, isLoading } = useSWR('/api/status', fetcher, { refreshInterval: 30000 });
+  const { data, error, isLoading } = useSWR('/api/status', fetcher, statusSwrConfig);
   const [query, setQuery] = useState('');
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set([]));
   const [requestingSeq, setRequestingSeq] = useState<string | null>(null);
@@ -130,7 +129,11 @@ export default function Playlist() {
     
     setRequestingSeq(sequence);
     try {
-      const res = await fetch('/api/request', { method: 'POST', body: JSON.stringify({ sequence }) });
+      const res = await fetch('/api/request', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sequence })
+      });
       const data = await res.json();
       
       if (!res.ok) {
