@@ -64,7 +64,12 @@ export const adminCookieOptions = {
   // The admin UI is same-origin, so 'strict' costs nothing and removes the
   // residual cross-site request surface that 'lax' leaves open.
   sameSite: 'strict' as const,
-  secure: process.env.NODE_ENV === 'production',
+  // A Secure cookie is silently dropped by the browser over plain http.
+  // NODE_ENV==='production' is also true for a local `npm run start`, which
+  // is plain http on a laptop — WEBSITE_SITE_NAME is Azure App Service's own
+  // auto-injected env var, so this is only true where we're actually behind
+  // Front Door's TLS. Same distinction as `isDeployed` in next.config.js.
+  secure: Boolean(process.env.WEBSITE_SITE_NAME),
   path: '/',
 };
 

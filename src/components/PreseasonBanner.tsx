@@ -102,7 +102,7 @@ function FinalShowBanner({ dismiss, sparkles, parts, mounted, countdownDone }: {
         <div className="flex flex-col md:flex-row md:items-center gap-5 md:gap-8 relative z-10">
           <div className="flex-1 space-y-2">
             <p className="text-xs font-semibold uppercase tracking-[0.18em] text-brand-maroon dark:text-brand-gold/90">2025 Season Finale</p>
-            <h2 className="text-lg sm:text-xl font-extrabold text-neutral-900 dark:text-neutral-100 leading-snug">
+            <h2 className="font-display text-lg sm:text-xl font-extrabold text-neutral-900 dark:text-neutral-100 leading-snug">
               Last night of the show: <span className="whitespace-nowrap text-brand-maroon dark:text-brand-gold font-extrabold">New Year's Day!</span>
             </h2>
             <p className="text-[13px] sm:text-sm leading-relaxed text-neutral-700 dark:text-neutral-300 max-w-2xl">Don't miss your last chance to see our synchronized light show this season! Join us on January 1st from 5:00 PM to 8:00 PM for the grand finale featuring 42 thousand lights. Thank you for an amazing season!</p>
@@ -134,7 +134,7 @@ function SeasonEndBanner({ dismiss, sparkles }: { dismiss: () => void; sparkles:
         <div className="flex flex-col md:flex-row md:items-center gap-5 md:gap-8 relative z-10">
           <div className="flex-1 space-y-2">
             <p className="text-xs font-semibold uppercase tracking-[0.18em] text-brand-green dark:text-brand-gold/90">2025 Season Complete</p>
-            <h2 className="text-lg sm:text-xl font-extrabold text-neutral-900 dark:text-neutral-100 leading-snug">
+            <h2 className="font-display text-lg sm:text-xl font-extrabold text-neutral-900 dark:text-neutral-100 leading-snug">
               Thank you for an amazing season! 🎄✨
             </h2>
             <p className="text-[13px] sm:text-sm leading-relaxed text-neutral-700 dark:text-neutral-300 max-w-2xl">The 2025 light show season has come to a close. Thank you to everyone who visited, requested songs, and made this year so special! Missed a show or want to relive the magic? Check out our video gallery below.</p>

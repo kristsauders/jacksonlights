@@ -1,4 +1,5 @@
 import Image from 'next/image';
+import HeroVideoBackground from './HeroVideoBackground';
 import MapLink from './MapLink';
 import gallery from '../../public/gallery.json';
 
@@ -67,6 +68,7 @@ export default function HeroHeader() {
             className="object-cover scale-105"
           />
         )}
+        <HeroVideoBackground />
         {/* Tint overlays. The heavy full-bleed backdrop-blur that used to sit
             here was dropped: blurring a viewport-sized layer is one of the most
             expensive things a mobile GPU can be asked to do on every scroll. */}
@@ -75,7 +77,7 @@ export default function HeroHeader() {
       </div>
 
       <div className="relative z-10 mx-auto max-w-5xl w-full text-center space-y-5 sm:space-y-7">
-        <h1 className="font-extrabold tracking-tight leading-tight text-balance text-4xl xs:text-[2.75rem] sm:text-6xl md:text-7xl lg:text-8xl">
+        <h1 className="font-display font-extrabold tracking-tight leading-tight text-balance text-4xl xs:text-[2.75rem] sm:text-6xl md:text-7xl lg:text-8xl">
           <span className="bg-gradient-to-r from-brand-red via-brand-gold to-brand-green text-transparent bg-clip-text drop-shadow-[0_4px_6px_rgba(0,0,0,0.35)]">Jackson Lights</span>
         </h1>
         <p className="mx-auto max-w-3xl text-sm sm:text-base md:text-xl lg:text-2xl font-medium text-brand-maroon/90 dark:text-brand-gold/80">

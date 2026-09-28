@@ -1,8 +1,30 @@
 import './globals.css';
 import type { Metadata } from 'next';
+import { Geist, Inter } from 'next/font/google';
 import { ReactNode } from 'react';
 import { Providers } from './providers';
+import Snowfall from '../src/components/Snowfall';
 import { registerSW } from '../src/app/register-sw';
+
+// Self-hosted at build time by next/font — no request to fonts.googleapis.com
+// at runtime, so this doesn't cost anything on the CSP or the performance
+// budget. Inter is body/UI text (Anthropic's own documented substitute for
+// their licensed Styrene B, which isn't available for us to use); Geist is
+// the display face for headlines — closer to Styrene's geometric-but-warm
+// character than Inter reads at large sizes, and unlike Inter isn't the
+// default look of half the web right now.
+const sans = Inter({ subsets: ['latin'], variable: '--font-sans', display: 'swap' });
+const display = Geist({
+  subsets: ['latin'],
+  weight: ['500', '600', '700', '800'],
+  variable: '--font-display',
+  display: 'swap',
+});
+
+// Single source of truth for the brand color shown in mobile browser chrome /
+// PWA task switcher. Previously this, the manifest, and Tailwind's brand.green
+// disagreed with each other (three different greens) — now all tied together.
+const THEME_COLOR = '#0F3B2E';
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://jacksonlights.com'),
@@ -35,7 +57,7 @@ export const metadata: Metadata = {
     siteName: 'Jackson Lights',
     images: [
       {
-        url: '/favicon-512.png',
+        url: '/icons/icon-512.png',
         width: 512,
         height: 512,
         alt: 'Jackson Lights display'
@@ -50,9 +72,15 @@ export const metadata: Metadata = {
     creator: '@jacksonlights',
     title: 'Jackson Lights • Beacon NY Holiday Light Show',
     description: 'Synchronized holiday light show in Beacon, NY. Pick the next song & enjoy the lights.',
-    images: ['/favicon-512.png']
+    images: ['/icons/icon-512.png']
   },
-  icons: [{ rel: 'icon', url: '/favicon.ico' }],
+  icons: [
+    // Modern browsers use the crisp vector; favicon.ico stays as the
+    // fallback for the few contexts that still only look for it.
+    { rel: 'icon', url: '/favicon.svg', type: 'image/svg+xml' },
+    { rel: 'icon', url: '/favicon.ico', sizes: 'any' },
+    { rel: 'apple-touch-icon', url: '/icons/icon-192.png' },
+  ],
   manifest: '/site.webmanifest',
   category: 'entertainment',
   other: {
@@ -65,9 +93,9 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en" suppressHydrationWarning className={`${sans.variable} ${display.variable}`}>
       <head>
-        <meta name="theme-color" content="#166534" />
+        <meta name="theme-color" content={THEME_COLOR} />
         <link rel="canonical" href="https://jacksonlights.com/" />
         {/* Structured Data: Organization + Event (adjust dates as needed) */}
         <script
@@ -80,7 +108,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
                   '@type': 'Organization',
                   name: 'Jackson Lights',
                   url: 'https://jacksonlights.com',
-                  logo: 'https://jacksonlights.com/favicon-512.png',
+                  logo: 'https://jacksonlights.com/icons/icon-512.png',
                   sameAs: [
                     'https://www.jacksonstreetlights.com/', // add actual socials if available
                   ]
@@ -111,6 +139,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         />
       </head>
       <body>
+        <Snowfall />
         <Providers>
           {children}
         </Providers>

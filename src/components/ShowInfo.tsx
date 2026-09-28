@@ -228,7 +228,7 @@ export default function ShowInfo(){
       <section className="relative rounded-2xl overflow-hidden ring-1 ring-brand-maroon/20 dark:ring-brand-pine/40 bg-gradient-to-br from-brand-cream/80 via-white/70 to-brand-gold/40 dark:from-brand-pine/60 dark:via-neutral-900/70 dark:to-brand-green/30 p-6 md:p-9">
         <div className="absolute inset-0 pointer-events-none [mask-image:radial-gradient(circle_at_25%_35%,white,transparent_70%)]" />
         <div className="relative z-10 max-w-4xl mx-auto space-y-5">
-          <h3 className="text-2xl md:text-3xl font-extrabold tracking-tight text-brand-maroon dark:text-brand-gold">A Family Light Show For Beacon</h3>
+          <h3 className="font-display text-2xl md:text-3xl font-extrabold tracking-tight text-brand-maroon dark:text-brand-gold">A Family Light Show For Beacon</h3>
           <p className="text-sm md:text-base leading-relaxed text-neutral-700 dark:text-neutral-300">
             Jackson Lights is a family-run holiday light show right here in Beacon. 2025 marks our <strong>3rd season</strong> sharing synchronized music and pixels with neighbors, friends, and anyone who stops by. The show is completely <strong>free</strong>—it’s simply our way to add a little more sparkle, joy, and togetherness to the community during the holiday season.
           </p>
@@ -242,7 +242,7 @@ export default function ShowInfo(){
         <div className="absolute inset-0 pointer-events-none [mask-image:radial-gradient(circle_at_30%_30%,white,transparent_75%)]" />
         <div className="relative z-10 flex flex-col gap-6 md:flex-row md:items-center">
           <div className="flex-1 space-y-4">
-            <h3 className="text-2xl md:text-3xl font-extrabold tracking-tight bg-gradient-to-r from-brand-red via-brand-gold to-brand-green bg-clip-text text-transparent">Tech Stuff About The Show</h3>
+            <h3 className="font-display text-2xl md:text-3xl font-extrabold tracking-tight bg-gradient-to-r from-brand-red via-brand-gold to-brand-green bg-clip-text text-transparent">Tech Stuff About The Show</h3>
             <p className="text-sm md:text-base leading-relaxed text-neutral-700 dark:text-neutral-300">
               Jackson Lights is a fully synchronized holiday light experience in Beacon, NY combining music,
               RGB pixels, wireless Twinkly strands, and custom-built props all driven by Falcon & Kulp controllers.

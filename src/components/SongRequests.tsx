@@ -42,7 +42,7 @@ export default function SongRequests(){
   return (
     <div className="space-y-8">
       <div className="text-center space-y-4">
-        <h3 className="text-2xl md:text-3xl font-extrabold tracking-tight bg-gradient-to-r from-brand-red via-brand-gold to-brand-green bg-clip-text text-transparent">Suggest Songs For Next Year</h3>
+        <h3 className="font-display text-2xl md:text-3xl font-extrabold tracking-tight bg-gradient-to-r from-brand-red via-brand-gold to-brand-green bg-clip-text text-transparent">Suggest Songs For Next Year</h3>
         <p className="text-sm md:text-base max-w-2xl mx-auto text-neutral-700 dark:text-neutral-300">Submit ideas for songs you&apos;d love to see added next season.</p>
       </div>
       <form onSubmit={addIdea} className="flex flex-col sm:flex-row gap-3">

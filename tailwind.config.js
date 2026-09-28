@@ -1,3 +1,5 @@
+import defaultTheme from 'tailwindcss/defaultTheme';
+
 /** @type {import('tailwindcss').Config} */
 export default {
   darkMode: 'class',
@@ -7,6 +9,15 @@ export default {
   ],
   theme: {
     extend: {
+      fontFamily: {
+        // Set via next/font in app/layout.tsx (self-hosted, no external
+        // request). Falls back to the system stack if a variable is ever
+        // missing, e.g. during a font load error.
+        sans: ['var(--font-sans)', ...defaultTheme.fontFamily.sans],
+        // Distinct display face for headlines and brand moments — used via
+        // the `font-display` utility, not applied everywhere by default.
+        display: ['var(--font-display)', ...defaultTheme.fontFamily.sans],
+      },
       colors: {
         brand: {
           red: '#BF2C31',

@@ -28,7 +28,7 @@ export default function Donate(){
     <div className="relative rounded-2xl overflow-hidden ring-1 ring-brand-maroon/15 dark:ring-brand-pine/30 bg-gradient-to-br from-white/70 via-brand-cream/50 to-brand-gold/30 dark:from-neutral-900/60 dark:via-brand-pine/40 dark:to-brand-green/25 p-5 sm:p-6 md:p-10">
       <div className="relative z-10 max-w-3xl mx-auto space-y-6 sm:space-y-8">
         <header className="text-center space-y-3 sm:space-y-4">
-          <h3 className="text-xl sm:text-2xl md:text-3xl font-extrabold tracking-tight bg-gradient-to-r from-brand-red via-brand-gold to-brand-green bg-clip-text text-transparent">Support & Amplify</h3>
+          <h3 className="font-display text-xl sm:text-2xl md:text-3xl font-extrabold tracking-tight bg-gradient-to-r from-brand-red via-brand-gold to-brand-green bg-clip-text text-transparent">Support & Amplify</h3>
           <p className="text-xs sm:text-sm md:text-base text-neutral-700 dark:text-neutral-300 leading-relaxed">The show is and will always be free so everyone can share the wonder. If you feel inspired to give, this season we&apos;re directing all donations to <span className="font-semibold">[Local Charity Placeholder]</span>. Every dollar you give is <span className="font-bold text-brand-green">matched 1:1</span> to double the impact.</p>
         </header>
         <div className="grid md:grid-cols-3 gap-5 md:gap-6 items-start">
