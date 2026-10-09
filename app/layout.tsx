@@ -1,22 +1,27 @@
 import './globals.css';
 import type { Metadata } from 'next';
-import { Geist, Inter } from 'next/font/google';
+import localFont from 'next/font/local';
 import { ReactNode } from 'react';
 import { Providers } from './providers';
 import Snowfall from '../src/components/Snowfall';
 import { registerSW } from '../src/app/register-sw';
 
-// Self-hosted at build time by next/font — no request to fonts.googleapis.com
-// at runtime, so this doesn't cost anything on the CSP or the performance
-// budget. Inter is body/UI text (Anthropic's own documented substitute for
-// their licensed Styrene B, which isn't available for us to use); Geist is
-// the display face for headlines — closer to Styrene's geometric-but-warm
-// character than Inter reads at large sizes, and unlike Inter isn't the
-// default look of half the web right now.
-const sans = Inter({ subsets: ['latin'], variable: '--font-sans', display: 'swap' });
-const display = Geist({
-  subsets: ['latin'],
-  weight: ['500', '600', '700', '800'],
+// Self-hosted from app/fonts (Latin subset, variable weight). These used to be
+// next/font/google, which downloads the fonts from Google during every build;
+// that request intermittently hung or failed on the Azure build server and took
+// whole deploys down with it. Local files make the build independent of Google
+// and add nothing to the CSP. Inter is body/UI text (Anthropic's own documented
+// substitute for their licensed Styrene B, which isn't available for us to
+// use); Geist is the display face for headlines.
+const sans = localFont({
+  src: './fonts/Inter-latin-variable.woff2',
+  weight: '100 900',
+  variable: '--font-sans',
+  display: 'swap',
+});
+const display = localFont({
+  src: './fonts/Geist-latin-variable.woff2',
+  weight: '100 900',
   variable: '--font-display',
   display: 'swap',
 });
