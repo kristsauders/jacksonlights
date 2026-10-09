@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { readFile, stat } from 'fs/promises';
 import path from 'path';
 import { isValidMediaFilename, resolveInside } from '../../../../../src/lib/safePath';
+import { POSTS_DIR } from '../../../../../src/lib/storagePaths';
 
 const MIME_TYPES: Record<string, string> = {
   '.jpg': 'image/jpeg',
@@ -27,7 +28,7 @@ export async function GET(
       return new NextResponse('Invalid filename', { status: 400 });
     }
 
-    const postsDir = path.join(process.cwd(), 'public', 'posts');
+    const postsDir = POSTS_DIR;
     const filePath = resolveInside(postsDir, filename);
     if (!filePath) return new NextResponse('Invalid filename', { status: 400 });
 
