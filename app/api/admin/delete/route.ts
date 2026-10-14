@@ -3,6 +3,7 @@ import { ADMIN_COOKIE, verifyAdminToken } from '../../../../src/lib/adminAuth';
 import { isValidMediaFilename, isValidPostId, resolveInside } from '../../../../src/lib/safePath';
 import path from 'path';
 import { readFile, unlink } from 'fs/promises';
+import { POSTS_DIR } from '../../../../src/lib/storagePaths';
 
 interface PostMetadata {
   id: string;
@@ -29,7 +30,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ message: 'Invalid id' }, { status: 400 });
     }
 
-    const postsDir = path.join(process.cwd(), 'public', 'posts');
+    const postsDir = POSTS_DIR;
     const metadataPath = resolveInside(postsDir, `${id}.json`);
     if (!metadataPath) {
       return NextResponse.json({ message: 'Invalid id' }, { status: 400 });

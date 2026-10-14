@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { readdir, readFile } from 'fs/promises';
 import path from 'path';
 import { isValidMediaFilename } from '../../../src/lib/safePath';
+import { POSTS_DIR } from '../../../src/lib/storagePaths';
 
 export const dynamic = 'force-dynamic';
 
@@ -23,7 +24,7 @@ interface PostItem {
 
 export async function GET() {
   try {
-    const postsDir = path.join(process.cwd(), 'public', 'posts');
+    const postsDir = POSTS_DIR;
     
     let files: string[];
     try {

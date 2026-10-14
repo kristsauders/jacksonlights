@@ -1,9 +1,10 @@
 import { promises as fs } from 'fs';
 import path from 'path';
+import { DATA_DIR } from './storagePaths';
 
 // All mutable site data lives here. It is gitignored so deploys never clobber
 // production data (see docs/DATA_PERSISTENCE.md).
-export const DATA_DIR = path.join(process.cwd(), 'data');
+export { DATA_DIR };
 
 export function dataPath(file: string): string {
   return path.join(DATA_DIR, file);

@@ -4,6 +4,7 @@ import { ADMIN_COOKIE, verifyAdminToken } from '../../../../src/lib/adminAuth';
 import { resolveInside } from '../../../../src/lib/safePath';
 import { mkdir, writeFile } from 'fs/promises';
 import path from 'path';
+import { POSTS_DIR } from '../../../../src/lib/storagePaths';
 
 interface PostMetadata {
   id: string;
@@ -82,7 +83,7 @@ export async function POST(req: NextRequest) {
     const id = Date.now().toString(36) + randomBytes(5).toString('hex');
     const filename = id + detected.ext;
 
-    const postsDir = path.join(process.cwd(), 'public', 'posts');
+    const postsDir = POSTS_DIR;
     const mediaPath = resolveInside(postsDir, filename);
     const metaPath = resolveInside(postsDir, `${id}.json`);
     if (!mediaPath || !metaPath) {

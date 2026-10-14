@@ -95,6 +95,16 @@ const nextConfig = {
         headers: securityHeaders,
       },
       {
+        // HTML pages. Next marks prerendered pages s-maxage=31536000 (one year),
+        // and Front Door honours that per edge location, so after a deploy some
+        // visitors kept getting last season's page until someone purged the
+        // cache. Keep the edge copy short; the page still revalidates quietly
+        // in the background. Hashed /_next/static assets, photos, icons and the
+        // API keep their own caching rules below and in the route handlers.
+        source: '/((?!_next/|api/|photos/|icons/|models/|audio/|gallery\\.json|sw\\.js).*)',
+        headers: [{ key: 'Cache-Control', value: 'public, max-age=0, s-maxage=300, stale-while-revalidate=600' }],
+      },
+      {
         // Photos and icons are content that only changes when redeployed, so
         // let Front Door and the browser hold on to them.
         source: '/photos/:path*',
