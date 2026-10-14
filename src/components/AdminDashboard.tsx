@@ -1,6 +1,8 @@
 "use client";
-import useSWR from 'swr';
-import { useEffect, useState, FormEvent } from 'react';
+import useSWR, { mutate as globalMutate } from 'swr';
+import { useActionState, useEffect, useOptimistic, useTransition } from 'react';
+import SubmitButton from './SubmitButton';
+import { POSTS_KEY, postsFetcher } from '../lib/swr';
 import { ResponsiveContainer, BarChart, XAxis, YAxis, Tooltip, Bar } from 'recharts';
 
 const fetcher = (url:string)=> fetch(url).then(r=> r.json());
@@ -78,62 +80,55 @@ function StatCard({ label, value }:{ label:string; value:string }){
   );
 }
 
-function UploadSection(){
-  const [file,setFile] = useState<File|null>(null);
-  const [caption,setCaption] = useState('');
-  const [status,setStatus] = useState<{state:'idle'|'uploading'|'error'|'done'; msg?:string}>({state:'idle'});
+interface UploadState { status:'idle'|'error'|'done'; msg?:string; caption?:string; }
 
-  async function submit(e:FormEvent){
-    e.preventDefault();
-    if(!file) return;
-    setStatus({state:'uploading', msg:undefined});
-    try {
-      const fd = new FormData();
-      fd.append('file', file);
-      fd.append('caption', caption);
-      const res = await fetch('/api/admin/upload', { method:'POST', body: fd });
-      if(!res.ok){
-        const data = await res.json().catch(()=>({ message:'Upload failed'}));
-        setStatus({state:'error', msg:data.message||'Upload failed'});
-        return;
-      }
-      setStatus({state:'done', msg:'Uploaded! Check Behind the Scenes tab.'});
-      setFile(null); setCaption('');
-      // Trigger event to refresh PostsFeed
-      window.dispatchEvent(new Event('newPostUploaded'));
-    } catch (e:any){
-      setStatus({state:'error', msg:'Network error'});
+async function uploadPost(_prev:UploadState, form:FormData): Promise<UploadState> {
+  const file = form.get('file');
+  const caption = String(form.get('caption') ?? '');
+  if (!(file instanceof File) || file.size === 0) return { status:'error', msg:'Choose a file first.', caption };
+  try {
+    const res = await fetch('/api/admin/upload', { method:'POST', body: form });
+    if (!res.ok) {
+      const data = await res.json().catch(()=>({ message:'Upload failed' }));
+      return { status:'error', msg: data.message || 'Upload failed', caption };
     }
+    // Refreshes the admin list and the public Behind the Scenes feed alike.
+    await globalMutate(POSTS_KEY);
+    return { status:'done', msg:'Uploaded! Check Behind the Scenes tab.' };
+  } catch {
+    return { status:'error', msg:'Network error', caption };
   }
+}
+
+function UploadSection(){
+  const [state, formAction] = useActionState<UploadState, FormData>(uploadPost, { status:'idle' });
   return (
     <div className="rounded-xl ring-1 ring-neutral-200 dark:ring-neutral-800 bg-white/70 dark:bg-neutral-900/60 backdrop-blur p-4 space-y-4">
       <h3 className="text-sm font-semibold tracking-wide text-brand-maroon dark:text-brand-gold uppercase">Quick Upload</h3>
-      <form onSubmit={submit} className="space-y-3">
+      <form action={formAction} className="space-y-3">
         <input
           type="file"
+          name="file"
           accept="image/*,video/mp4,video/webm,video/quicktime"
-          onChange={e=> setFile(e.target.files?.[0]||null)}
           className="block w-full text-xs file:mr-3 file:rounded-md file:border-0 file:bg-brand-green/80 file:text-white file:px-3 file:py-1.5 file:text-xs hover:file:bg-brand-green"
           required
         />
         <input
           type="text"
+          name="caption"
           placeholder="Caption / short description"
           maxLength={140}
-          value={caption}
-          onChange={e=> setCaption(e.target.value)}
+          defaultValue={state.caption ?? ''}
           className="w-full rounded-md bg-neutral-100 dark:bg-neutral-800 border border-neutral-300 dark:border-neutral-700 px-3 py-2 text-xs"
         />
         <div className="flex items-center gap-3">
-          <button
-            type="submit"
-            disabled={!file || status.state==='uploading'}
-            className="px-4 py-2 rounded-md bg-brand-green text-white text-xs font-semibold disabled:opacity-50"
-          >
-            {status.state==='uploading' ? 'Uploading…' : 'Upload'}
-          </button>
-          {status.state==='error' && <p className="text-xs text-red-600">{status.msg}</p>}
-          {status.state==='done' && <p className="text-xs text-brand-green font-medium">{status.msg}</p>}
+          <SubmitButton pendingLabel="Uploading…" className="px-4 py-2 rounded-md bg-brand-green text-white text-xs font-semibold disabled:opacity-50">
+            Upload
+          </SubmitButton>
+          <span role="status" aria-live="polite">
+            {state.status==='error' && <span className="text-xs text-red-600">{state.msg}</span>}
+            {state.status==='done' && <span className="text-xs text-brand-green font-medium">{state.msg}</span>}
+          </span>
         </div>
       </form>
       <p className="text-[10px] text-neutral-500 leading-relaxed">
@@ -146,31 +141,27 @@ function UploadSection(){
 }
 
 function ManagePostsSection(){
-  const { data: posts, mutate } = useSWR<PostItem[]>('/api/posts', (u: string)=> fetch(u).then(r=> r.json()));
-  const [deleting, setDeleting] = useState<string|null>(null);
-  
-  // Listen for new post uploads to refresh
-  useEffect(() => {
-    const handleRefresh = () => mutate();
-    window.addEventListener('newPostUploaded', handleRefresh);
-    return () => window.removeEventListener('newPostUploaded', handleRefresh);
-  }, [mutate]);
-  
-  async function remove(id:string){
+  const { data: posts, mutate } = useSWR<PostItem[]>(POSTS_KEY, postsFetcher);
+  const [, startDelete] = useTransition();
+  // The row disappears the moment you confirm; if the delete fails it comes back
+  // when the transition settles.
+  const [visiblePosts, hidePost] = useOptimistic(
+    posts,
+    (current: PostItem[] | undefined, id: string) => current?.filter(p=> p.id!==id)
+  );
+
+  function remove(id:string){
     if (!confirm('Delete this post? This cannot be undone.')) return;
-    setDeleting(id);
-    try {
-      const res = await fetch('/api/admin/delete', { method:'POST', headers:{ 'Content-Type':'application/json' }, body: JSON.stringify({ id }) });
-      if (res.ok){
-        mutate(posts?.filter(p=> p.id!==id), { revalidate:false });
-        // Trigger event to refresh PostsFeed
-        window.dispatchEvent(new Event('newPostUploaded'));
-      } else {
-        alert('Delete failed');
+    startDelete(async ()=>{
+      hidePost(id);
+      try {
+        const res = await fetch('/api/admin/delete', { method:'POST', headers:{ 'Content-Type':'application/json' }, body: JSON.stringify({ id }) });
+        if (!res.ok) alert('Delete failed');
+      } catch {
+        alert('Network error');
       }
-    } catch {
-      alert('Network error');
-    } finally { setDeleting(null); }
+      await globalMutate(POSTS_KEY);
+    });
   }
   return (
     <div className="rounded-xl ring-1 ring-neutral-200 dark:ring-neutral-800 bg-white/60 dark:bg-neutral-900/50 backdrop-blur p-4 space-y-4">
@@ -178,9 +169,9 @@ function ManagePostsSection(){
         <h3 className="text-sm font-semibold tracking-wide text-brand-maroon dark:text-brand-gold uppercase">Manage Posts</h3>
         <button onClick={()=> mutate()} className="text-[11px] px-2 py-1 rounded-md bg-neutral-200 dark:bg-neutral-800 hover:bg-neutral-300 dark:hover:bg-neutral-700">Refresh</button>
       </div>
-      {!posts ? <p className="text-xs text-neutral-500">Loading posts…</p> : posts.length===0 ? <p className="text-xs text-neutral-500">No posts yet.</p> : (
+      {!visiblePosts ? <p className="text-xs text-neutral-500">Loading posts…</p> : visiblePosts.length===0 ? <p className="text-xs text-neutral-500">No posts yet.</p> : (
         <ul className="divide-y divide-neutral-200 dark:divide-neutral-800 max-h-72 overflow-auto pr-1 text-xs">
-          {posts.slice(0,60).map(p=> (
+          {visiblePosts.slice(0,60).map(p=> (
             <li key={p.id} className="py-2 flex items-start gap-3">
               <div className="flex-1 min-w-0">
                 <p className="font-medium text-neutral-800 dark:text-neutral-200 truncate">{p.alt || '(no caption)'}</p>
@@ -188,7 +179,7 @@ function ManagePostsSection(){
               </div>
               <div className="flex items-center gap-2">
                 <a href={p.src} target="_blank" rel="noopener noreferrer" className="px-2 py-1 rounded bg-neutral-100 dark:bg-neutral-800 hover:bg-neutral-200 dark:hover:bg-neutral-700 text-[10px]">View</a>
-                <button disabled={deleting===p.id} onClick={()=> remove(p.id)} className="px-2 py-1 rounded bg-red-600/90 hover:bg-red-600 text-white text-[10px] disabled:opacity-50">{deleting===p.id? 'Deleting…':'Delete'}</button>
+                <button onClick={()=> remove(p.id)} className="px-2 py-1 rounded bg-red-600/90 hover:bg-red-600 text-white text-[10px]">Delete</button>
               </div>
             </li>
           ))}

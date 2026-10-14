@@ -79,6 +79,9 @@ const nextConfig = {
   images: {
     // Serve modern formats to browsers that accept them.
     formats: ['image/avif', 'image/webp'],
+    // Next 16 only allows quality 75 unless listed here, and silently rounds
+    // anything else to it. HeroHeader asks for 70.
+    qualities: [70, 75],
     remotePatterns: [
       { protocol: 'https', hostname: 'i.ytimg.com' },
       { protocol: 'https', hostname: 'img.youtube.com' }

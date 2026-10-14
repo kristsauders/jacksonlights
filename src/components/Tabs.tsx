@@ -1,11 +1,14 @@
 "use client";
-import { useState, ReactNode } from 'react';
+import { useState, startTransition, ReactNode } from 'react';
 
 export interface TabItem { id: string; label: string; icon?: ReactNode; }
 
 export default function Tabs({ tabs, initial, onChange }: { tabs: TabItem[]; initial?: string; onChange?(id:string):void }) {
   const [active, setActive] = useState(initial || tabs[0]?.id);
-  function select(id: string){ setActive(id); onChange?.(id); }
+  // The highlight is urgent, so it updates in the same frame as the click. The
+  // panel swap is the transition: that is what lets <ViewTransition> animate it,
+  // and it keeps the page responsive while a heavy panel renders.
+  function select(id: string){ setActive(id); startTransition(() => onChange?.(id)); }
   return (
     <div className="w-full">
   <div role="tablist" aria-label="Site sections" className="flex flex-wrap gap-1.5 sm:gap-2 mb-4 sm:mb-6">

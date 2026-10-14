@@ -49,3 +49,16 @@ body { font-feature-settings: 'ss01' on; }
   from { transform: translate3d(0, 0, 0); }
   to { transform: translate3d(24px, 24px, 0); }
 }
+
+/* Tab panel transitions (React <ViewTransition> in TabbedSections).
+   Only the panels should cross-fade, not the whole page, so the root snapshot
+   is kept static; the twinkle backdrop and snowfall sit in it. Short, and
+   skipped entirely for people who ask for reduced motion. */
+::view-transition-old(root) { display: none; }
+::view-transition-new(root) { animation: none; }
+::view-transition-group(*) { animation-duration: 180ms; }
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) { animation: none !important; }
+}

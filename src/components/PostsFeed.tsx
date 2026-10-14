@@ -1,6 +1,8 @@
 "use client";
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
+import useSWR from 'swr';
 import { motion } from 'framer-motion';
+import { POSTS_KEY, postsFetcher } from '../lib/swr';
 
 interface PostItem {
   id: string;
@@ -66,37 +68,19 @@ function PostMedia({ post }: { post: PostItem }) {
 }
 
 export default function PostsFeed() {
-  const [posts, setPosts] = useState<PostItem[]>([]);
-  const [error, setError] = useState<string | undefined>();
-  const [refreshKey, setRefreshKey] = useState(0);
+  const { data: posts, error, isLoading } = useSWR<PostItem[]>(POSTS_KEY, postsFetcher);
 
-  useEffect(() => {
-    // Fetch from API endpoint that scans the posts directory
-    fetch('/api/posts')
-      .then((r) => (r.ok ? r.json() : []))
-      .then((data: PostItem[]) => {
-        setPosts(data);
-      })
-      .catch(() => setError('Unable to load posts'));
-  }, [refreshKey]);
-
-  // Listen for custom event when a new post is uploaded
-  useEffect(() => {
-    const handleNewPost = () => {
-      setRefreshKey(prev => prev + 1);
-    };
-    window.addEventListener('newPostUploaded', handleNewPost);
-    return () => window.removeEventListener('newPostUploaded', handleNewPost);
-  }, []);
-
-  if (error) {
+  if (error && !posts) {
     return (
       <div role="alert" className="text-sm text-red-600">
-        {error}
+        Unable to load posts
       </div>
     );
   }
-  if (!posts.length) {
+  if (isLoading && !posts) {
+    return <p className="text-sm text-neutral-600 dark:text-neutral-400">Loading posts…</p>;
+  }
+  if (!posts?.length) {
     return (
       <p className="text-sm text-neutral-600 dark:text-neutral-400">
         No posts yet. Upload media in the Admin tab.

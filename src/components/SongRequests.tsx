@@ -1,42 +1,64 @@
 "use client";
 import useSWR from 'swr';
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useActionState, useOptimistic, useTransition } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import SubmitButton from './SubmitButton';
 
 interface Idea { id:string; title:string; votes:number; createdAt:string; }
+interface AddState { status:'idle'|'success'|'info'|'error'; message?:string; values?:{ title:string }; }
 const fetcher = (url:string)=> fetch(url).then(r=>r.json());
 
 export default function SongRequests(){
   const { data, mutate, isLoading } = useSWR('/api/song-ideas', fetcher, { refreshInterval: 20000 });
   const ideas: Idea[] = data?.ideas || [];
-  const [title,setTitle] = useState('');
   const [filter,setFilter] = useState('');
-  const [submitting,setSubmitting] = useState(false);
   const [sort,setSort] = useState<'top'|'new'>('top');
+  const [voteNotice,setVoteNotice] = useState('');
+  const [,startVote] = useTransition();
+
+  // A vote shows up immediately; React drops the optimistic value and takes the
+  // server's number once the transition (PATCH + revalidate) settles, so a failed
+  // vote rolls itself back.
+  const [optimisticIdeas, addOptimisticVote] = useOptimistic(
+    ideas,
+    (current: Idea[], id: string) => current.map(i => i.id===id ? { ...i, votes: i.votes + 1 } : i)
+  );
 
   const filtered = useMemo(()=>{
-    const base = [...ideas];
+    const base = [...optimisticIdeas];
     if (sort==='top') base.sort((a,b)=> b.votes - a.votes || a.title.localeCompare(b.title));
     else base.sort((a,b)=> b.createdAt.localeCompare(a.createdAt));
     const f = filter.trim().toLowerCase();
     return f? base.filter(i=> i.title.toLowerCase().includes(f)) : base;
-  }, [ideas, filter, sort]);
+  }, [optimisticIdeas, filter, sort]);
 
-  async function addIdea(e:React.FormEvent){
-    e.preventDefault();
-    const val = title.trim();
-    if (val.length < 2) return;
-    setSubmitting(true);
+  const [addState, addAction] = useActionState<AddState, FormData>(async (_prev, form) => {
+    const title = String(form.get('title') ?? '').trim();
+    if (title.length < 2) return { status:'error', message:'Enter at least 2 characters.', values:{ title } };
     try {
-      await fetch('/api/song-ideas', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ title: val }) });
-      setTitle('');
-      mutate();
-    } finally { setSubmitting(false); }
-  }
+      const res = await fetch('/api/song-ideas', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ title }) });
+      const data = await res.json().catch(()=>({}));
+      if (!res.ok) return { status:'error', message: data.message || 'Could not add that right now.', values:{ title } };
+      await mutate();
+      if (res.status !== 201) return { status:'info', message:"That one's already on the list — give it a vote!" };
+      return { status:'success' };
+    } catch {
+      return { status:'error', message:'Network error — please try again.', values:{ title } };
+    }
+  }, { status:'idle' });
 
-  async function vote(id:string){
-    await fetch('/api/song-ideas', { method:'PATCH', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ id }) });
-    mutate();
+  function vote(id:string){
+    setVoteNotice('');
+    startVote(async ()=>{
+      addOptimisticVote(id);
+      try {
+        const res = await fetch('/api/song-ideas', { method:'PATCH', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ id }) });
+        if (!res.ok) setVoteNotice((await res.json().catch(()=>({}))).message || 'Could not record that vote.');
+      } catch {
+        setVoteNotice('Network error — your vote was not recorded.');
+      }
+      await mutate();
+    });
   }
 
   return (
@@ -45,10 +67,17 @@ export default function SongRequests(){
         <h3 className="font-display text-2xl md:text-3xl font-extrabold tracking-tight bg-gradient-to-r from-brand-red via-brand-gold to-brand-green bg-clip-text text-transparent">Suggest Songs For Next Year</h3>
         <p className="text-sm md:text-base max-w-2xl mx-auto text-neutral-700 dark:text-neutral-300">Submit ideas for songs you&apos;d love to see added next season.</p>
       </div>
-      <form onSubmit={addIdea} className="flex flex-col sm:flex-row gap-3">
-        <input value={title} onChange={e=>setTitle(e.target.value)} placeholder="Suggest a song (title - artist)" className="flex-1 rounded-lg bg-white/80 dark:bg-neutral-900/70 ring-1 ring-neutral-300 dark:ring-neutral-700 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-green text-neutral-800 dark:text-neutral-200" />
-        <button disabled={submitting} className="px-6 py-3 rounded-lg text-sm font-semibold bg-brand-green text-white shadow hover:bg-brand-pine transition disabled:opacity-50">{submitting? 'Adding…':'Add Idea'}</button>
+      <form action={addAction} className="flex flex-col sm:flex-row gap-3">
+        <input name="title" defaultValue={addState.values?.title ?? ''} maxLength={120} placeholder="Suggest a song (title - artist)" className="flex-1 rounded-lg bg-white/80 dark:bg-neutral-900/70 ring-1 ring-neutral-300 dark:ring-neutral-700 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-green text-neutral-800 dark:text-neutral-200" />
+        <SubmitButton pendingLabel="Adding…" className="px-6 py-3 rounded-lg text-sm font-semibold bg-brand-green text-white shadow hover:bg-brand-pine transition disabled:opacity-50">Add Idea</SubmitButton>
       </form>
+      {(addState.status==='error' || addState.status==='info' || voteNotice) && (
+        <p role={addState.status==='info' && !voteNotice ? 'status' : 'alert'} className="text-xs text-center -mt-4">
+          {addState.status==='error' && <span className="text-red-600 dark:text-red-400">{addState.message}</span>}
+          {addState.status==='info' && <span className="text-neutral-600 dark:text-neutral-400">{addState.message}</span>}
+          {voteNotice && <span className="text-red-600 dark:text-red-400">{voteNotice}</span>}
+        </p>
+      )}
       <div className="flex flex-col lg:flex-row gap-6">
         <div className="flex-1 space-y-4">
           <div className="flex flex-wrap gap-3 items-center justify-between">

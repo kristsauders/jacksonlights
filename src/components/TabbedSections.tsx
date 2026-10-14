@@ -1,8 +1,9 @@
 "use client";
-import { useState, useEffect } from 'react';
+import { Activity, Fragment, ViewTransition, useEffect, useState, type ReactNode } from 'react';
 import dynamic from 'next/dynamic';
 import Tabs from './Tabs';
 import Playlist from './Playlist';
+import AdminPanel from './AdminPanel';
 
 // Only the default tab (Playlist) is part of the initial bundle. Everything
 // else is fetched when its tab is first opened.
@@ -22,7 +23,6 @@ const PhotoCarousel = dynamic(() => import('./PhotoCarousel'), { loading: panelL
 const VideoGallery = dynamic(() => import('./VideoGallery'), { loading: panelLoading });
 const ShowInfo = dynamic(() => import('./ShowInfo'), { loading: panelLoading });
 const PostsFeed = dynamic(() => import('./PostsFeed'), { loading: panelLoading });
-const Donate = dynamic(() => import('./Donate'), { loading: panelLoading });
 const SongRequests = dynamic(() => import('./SongRequests'), { loading: panelLoading });
 const FeedbackForm = dynamic(() => import('./FeedbackForm'), { loading: panelLoading });
 const AdminDashboard = dynamic(
@@ -30,89 +30,84 @@ const AdminDashboard = dynamic(
   { loading: panelLoading, ssr: false }
 );
 
-export default function TabbedSections(){
-  const [active,setActive] = useState('playlist');
-  const [adminPassword,setAdminPassword] = useState('');
-  const [authState,setAuthState] = useState<'idle'|'logging'|'error'|'ok'>('idle');
-  const [errorMsg,setErrorMsg] = useState('');
+const TABS = [
+  { id: 'playlist', label: 'Song List' },
+  { id: 'gallery', label: 'Gallery' }, // Combined Photos + Videos
+  { id: 'info', label: 'About Us' },
+  { id: 'requests', label: 'Requests & Feedback' }, // Combined Requests + Feedback
+  { id: 'posts', label: 'Behind the Scenes' },
+  { id: 'admin', label: 'Admin' },
+];
+
+const PANELS: Record<string, () => ReactNode> = {
+  playlist: () => <Playlist />,
+  gallery: () => (
+    <div className="space-y-12">
+      <PhotoCarousel />
+      <VideoGallery />
+    </div>
+  ),
+  info: () => <ShowInfo />,
+  requests: () => (
+    <div className="space-y-12">
+      <SongRequests />
+      <FeedbackForm />
+    </div>
+  ),
+  posts: () => <PostsFeed />,
+  admin: () => (
+    <AdminPanel>
+      <AdminDashboard />
+    </AdminPanel>
+  ),
+};
+
+// Panels that keep their state (search text, expanded categories, half-typed
+// forms, admin session) when you switch away, using <Activity> to hide rather
+// than unmount them. Deliberately NOT the media panels: a hidden panel's DOM
+// stays alive, so a playing YouTube embed or <video> would keep making sound
+// after you left the tab.
+const KEEP_ALIVE = new Set(['playlist', 'requests', 'admin']);
+
+export default function TabbedSections() {
+  const [active, setActive] = useState('playlist');
+  // A keep-alive panel is only mounted once it has been opened, so its lazy
+  // chunk (and recharts, for admin) still isn't downloaded until needed.
+  const [visited, setVisited] = useState<ReadonlySet<string>>(() => new Set(['playlist']));
+
+  function changeTab(id: string) {
+    setActive(id);
+    setVisited((prev) => (prev.has(id) ? prev : new Set(prev).add(id)));
+  }
 
   // ping visits endpoint once per mount (fire and forget)
-  useEffect(()=>{ fetch('/api/metrics/visit', { method:'POST' }).catch(()=>{}); },[]);
+  useEffect(() => {
+    fetch('/api/metrics/visit', { method: 'POST' }).catch(() => {});
+  }, []);
+
   return (
     <div>
-  <Tabs tabs={[
-    { id:'playlist', label:'Song List' },
-    { id:'gallery', label:'Gallery' }, // Combined Photos + Videos
-    { id:'info', label:'About Us' },
-    // { id:'donate', label:'Donate' },
-    { id:'requests', label:'Requests & Feedback' }, // Combined Requests + Feedback
-    { id:'posts', label:'Behind the Scenes' },
-	{ id:'admin', label:'Admin' }
-  ]} initial={active} onChange={setActive} />
-  <div className="mt-3 sm:mt-4 space-y-8 sm:space-y-10">
-        {active==='playlist' && <Playlist />}
-        {active==='gallery' && (
-          <div className="space-y-12">
-            <PhotoCarousel />
-            <VideoGallery />
-          </div>
-        )}
-        {active==='info' && <ShowInfo />}
-        {active==='donate' && <Donate />}
-        {active==='requests' && (
-          <div className="space-y-12">
-            <SongRequests />
-            <FeedbackForm />
-          </div>
-        )}
-  {active==='posts' && <PostsFeed />}
-  {active==='admin' && (
-    <div className="space-y-6">
-      <AdminAuthSection password={adminPassword} setPassword={setAdminPassword} state={authState} setState={setAuthState} error={errorMsg} setError={setErrorMsg} />
-      {authState==='ok' && <AdminDashboard />}
-    </div>
-  )}
+      <Tabs tabs={TABS} initial={active} onChange={changeTab} />
+      <div className="mt-3 sm:mt-4">
+        {TABS.map(({ id }) => {
+          const keepAlive = KEEP_ALIVE.has(id);
+          if (active !== id && !(keepAlive && visited.has(id))) return null;
+          const panel = (
+            <ViewTransition enter="auto" exit="auto" default="none">
+              <div role="tabpanel" id={`panel-${id}`} aria-labelledby={`tab-${id}`}>
+                {PANELS[id]()}
+              </div>
+            </ViewTransition>
+          );
+          return keepAlive ? (
+            <Activity key={id} mode={active === id ? 'visible' : 'hidden'}>
+              {panel}
+            </Activity>
+          ) : (
+            <Fragment key={id}>{panel}</Fragment>
+          );
+        })}
       </div>
     </div>
-  );
-}
-
-function AdminAuthSection({ password, setPassword, state, setState, error, setError }:{ password:string; setPassword:(v:string)=>void; state:'idle'|'logging'|'error'|'ok'; setState:(s:any)=>void; error:string; setError:(v:string)=>void; }){
-  async function login(e:React.FormEvent){
-    e.preventDefault();
-    if (!password) return;
-    setState('logging'); setError('');
-    try {
-      const res = await fetch('/api/admin/login', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ password }) });
-      if (!res.ok){
-        const data = await res.json().catch(()=>({}));
-        setState('error');
-        setError(data.message||'Login failed');
-        return;
-      }
-      setState('ok');
-      setPassword('');
-    } catch (e:any){
-      setState('error'); setError('Network error');
-    }
-  }
-  async function logout(){
-    await fetch('/api/admin/logout', { method:'POST' });
-    setState('idle');
-  }
-  if (state==='ok'){
-    return (
-      <div className="flex items-center gap-3 flex-wrap">
-        <span className="text-xs text-green-600 dark:text-green-400 font-medium">Logged in</span>
-        <button onClick={logout} className="text-xs px-3 py-1.5 rounded-md bg-red-600 text-white hover:bg-red-500">Logout</button>
-      </div>
-    );
-  }
-  return (
-    <form onSubmit={login} className="flex items-center gap-3 flex-wrap">
-      <input type="password" value={password} onChange={e=>setPassword(e.target.value)} placeholder="Admin password" className="text-sm px-3 py-2 rounded-md border border-neutral-300 dark:border-neutral-700 bg-white/80 dark:bg-neutral-900/60 focus-ring" autoComplete="current-password" />
-      <button disabled={state==='logging'} className="text-sm px-4 py-2 rounded-md bg-brand-green text-white font-medium disabled:opacity-60">{state==='logging'? 'Logging in...':'Login'}</button>
-      {state==='error' && <span className="text-xs text-red-600 dark:text-red-400">{error}</span>}
-    </form>
   );
 }
