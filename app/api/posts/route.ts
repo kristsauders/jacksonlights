@@ -72,9 +72,9 @@ export async function GET() {
       return bd - ad;
     });
     
-    return NextResponse.json(posts);
+    return NextResponse.json(posts, { headers: { 'Cache-Control': 'no-store' } });
   } catch (e) {
     console.error('Error loading posts:', e);
-    return NextResponse.json([]);
+    return NextResponse.json([], { headers: { 'Cache-Control': 'no-store' } });
   }
 }
