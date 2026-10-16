@@ -25,7 +25,9 @@ export const postsFetcher = (url: string) =>
  * a single poll.
  */
 export const statusSwrConfig = {
-  refreshInterval: 20_000,
+  // Voting is a live scoreboard, so poll faster while it is the active mode.
+  refreshInterval: (latest?: { preferences?: { viewerControlMode?: string } }) =>
+    latest?.preferences?.viewerControlMode === 'VOTING' ? 5_000 : 20_000,
   // Don't re-fetch every time someone alt-tabs back; the interval covers it.
   revalidateOnFocus: false,
   keepPreviousData: true,

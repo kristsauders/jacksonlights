@@ -7,7 +7,7 @@ export const dynamic = 'force-dynamic';
 // cache each poll became a separate upstream call to Remote Falcon, so origin
 // load (and page latency) scaled linearly with the number of people parked on
 // the site. One upstream call per CACHE_TTL_MS now serves everybody.
-const CACHE_TTL_MS = 10_000;
+const CACHE_TTL_MS = 5_000;
 
 let cached: { at: number; body: unknown } | null = null;
 let inFlight: Promise<unknown> | null = null;
@@ -28,6 +28,18 @@ function project(details: any) {
   if (details && typeof details === 'object') {
     for (const key of PUBLIC_KEYS) {
       if (key in details) out[key] = details[key];
+    }
+    // Live voting standings. Remote Falcon also lists who voted (by IP address)
+    // on each entry, so rebuild every row from just the public fields.
+    if (Array.isArray(details.votes)) {
+      out.votes = details.votes
+        .map((v: any) => ({
+          name: v?.sequence?.name ?? v?.sequenceGroup?.name,
+          displayName: v?.sequence?.displayName ?? v?.sequenceGroup?.name,
+          votes: v?.votes,
+          lastVoteTime: v?.lastVoteTime,
+        }))
+        .filter((v: any) => typeof v.name === 'string' && typeof v.votes === 'number' && v.votes > 0);
     }
   }
   return out;
@@ -60,7 +72,7 @@ export async function GET() {
       status: 200,
       headers: {
         // Let Front Door absorb the polling too.
-        'Cache-Control': 'public, max-age=5, s-maxage=10, stale-while-revalidate=30',
+        'Cache-Control': 'public, max-age=3, s-maxage=5, stale-while-revalidate=10',
       },
     });
   } catch (e) {

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getRemoteFalconClient } from '../../../src/lib/remoteFalcon';
 import { parseSequencePayload } from '../../../src/lib/sequencePayload';
+import { rejection } from '../../../src/lib/rfMessages';
 import { rateLimit } from '../../../src/lib/rateLimit';
 
 export const dynamic = 'force-dynamic';
@@ -15,6 +16,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ message: 'sequence required' }, { status: 400 });
     }
     const result = await getRemoteFalconClient().voteForSequence(payload);
+    const rejected = rejection(result);
+    if (rejected) return NextResponse.json({ message: rejected }, { status: 409 });
     return NextResponse.json(result, { status: 200 });
   } catch (e) {
     console.error('Vote for sequence error', e);

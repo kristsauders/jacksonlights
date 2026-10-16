@@ -1,5 +1,5 @@
 "use client";
-import useSWR from 'swr';
+import useSWR, { useSWRConfig } from 'swr';
 import { useState, useMemo } from 'react';
 import { fetcher, statusSwrConfig } from '../lib/swr';
 
@@ -86,9 +86,44 @@ function categorize(displayName: string): 'Christmas' | 'Pop' | 'Electronic' | '
   return CATEGORY_MAP[normalized] || 'Other';
 }
 
+interface VoteRow { name: string; displayName?: string; votes: number; lastVoteTime?: string }
+
+// Most votes first. On a tie the song that reached the count first stays ahead.
+function rankVotes(raw: unknown): VoteRow[] {
+  if (!Array.isArray(raw)) return [];
+  return [...(raw as VoteRow[])].sort((a, b) =>
+    b.votes - a.votes || String(a.lastVoteTime ?? '').localeCompare(String(b.lastVoteTime ?? '')));
+}
+
+function VoteStandings({ standings }: { standings: VoteRow[] }) {
+  const top = standings.slice(0, 10);
+  return (
+    <section aria-label="Current voting standings" className="rounded-lg border border-brand-gold/50 bg-gradient-to-br from-brand-cream/60 to-white/70 dark:from-brand-pine/40 dark:to-neutral-900/70 p-3 sm:p-4">
+      <h3 className="text-sm font-semibold uppercase tracking-wide text-brand-maroon dark:text-brand-gold mb-2">Top Votes</h3>
+      {top.length === 0 ? (
+        <p className="text-sm text-neutral-600 dark:text-neutral-400">No votes yet. Be the first to vote!</p>
+      ) : (
+        <ol className="space-y-1.5">
+          {top.map((v, i) => (
+            <li key={v.name} className="flex items-center gap-3 text-sm">
+              <span className={`w-6 shrink-0 text-center font-bold ${i === 0 ? 'text-brand-maroon dark:text-brand-gold' : 'text-neutral-500'}`}>{i === 0 ? '🏆' : i + 1}</span>
+              <span className={`flex-1 min-w-0 truncate ${i === 0 ? 'font-semibold' : ''}`}>{cleanSongName(v.displayName || v.name)}</span>
+              <span className="shrink-0 tabular-nums text-xs font-semibold text-brand-green dark:text-brand-gold">{v.votes} {v.votes === 1 ? 'vote' : 'votes'}</span>
+            </li>
+          ))}
+        </ol>
+      )}
+      {top.length > 0 && <p className="mt-2 text-xs text-neutral-600 dark:text-neutral-400">The top song plays next. Updates every few seconds.</p>}
+    </section>
+  );
+}
+
+const cleanSongName = (name: string) => name.replace(/\s*2025\s*40fps\s*$/i, '').trim();
+
 export default function Playlist() {
   // Hooks must always run in consistent order – keep all before any conditional returns
   const { data, error, isLoading } = useSWR('/api/status', fetcher, statusSwrConfig);
+  const { mutate } = useSWRConfig();
   const [query, setQuery] = useState('');
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set([]));
   const [requestingSeq, setRequestingSeq] = useState<string | null>(null);
@@ -96,6 +131,11 @@ export default function Playlist() {
 
   const sequences = (data?.sequences || []) as any[];
   const viewerControlEnabled = data?.preferences?.viewerControlEnabled ?? false;
+  // Remote Falcon runs the show in one of two modes: JUKEBOX (a request plays
+  // next, in order) or VOTING (everyone votes and the leader plays next).
+  const voting = data?.preferences?.viewerControlMode === 'VOTING';
+  const standings = useMemo(() => rankVotes(data?.votes), [data?.votes]);
+  const voteCounts = useMemo(() => new Map(standings.map(v => [v.name, v.votes])), [standings]);
   
   // Group by category and filter by search
   const grouped = useMemo(() => {
@@ -123,13 +163,13 @@ export default function Playlist() {
   async function handleRequest(sequence: string) {
     // Check if viewer control is enabled before sending request
     if (!viewerControlEnabled) {
-      alert('Song requests are currently disabled. Please try again when the show is active!');
+      alert(voting ? 'Voting is closed right now. Please try again when the show is active!' : 'Song requests are currently disabled. Please try again when the show is active!');
       return;
     }
     
     setRequestingSeq(sequence);
     try {
-      const res = await fetch('/api/request', {
+      const res = await fetch(voting ? '/api/vote' : '/api/request', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ sequence })
@@ -137,15 +177,17 @@ export default function Playlist() {
       const data = await res.json();
       
       if (!res.ok) {
-        throw new Error(data.message || 'Request failed');
+        throw new Error(data.message || (voting ? 'Vote failed' : 'Request failed'));
       }
       
       // If response is OK (200), treat it as success
       // Remote Falcon API returns 200 when request is accepted
       setSuccessSeq(sequence);
       setTimeout(() => setSuccessSeq(null), 2000);
+      // Show the new tally right away instead of waiting for the next poll.
+      if (voting) mutate('/api/status');
     } catch (e: any) {
-      alert(e.message || 'Unable to request the song right now.');
+      alert(e.message || (voting ? 'Unable to cast your vote right now.' : 'Unable to request the song right now.'));
     } finally {
       setRequestingSeq(null);
     }
@@ -168,23 +210,28 @@ export default function Playlist() {
       {!viewerControlEnabled && (
         <div className="rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-300 dark:border-amber-700/50 p-3 sm:p-4">
           <p className="text-sm text-amber-900 dark:text-amber-200 font-medium mb-1">
-            ⚠️ Requests Currently Disabled
+            {voting ? '⚠️ Voting Currently Closed' : '⚠️ Requests Currently Disabled'}
           </p>
           <p className="text-xs text-amber-800 dark:text-amber-300">
-            Song requests are disabled right now. Check back when the show is running to request your favorites!
+            {voting
+              ? 'Voting is closed right now. Check back when the show is running to vote for your favorites!'
+              : 'Song requests are disabled right now. Check back when the show is running to request your favorites!'}
           </p>
         </div>
       )}
       {viewerControlEnabled && (
         <div className="rounded-lg bg-brand-green/10 dark:bg-brand-green/15 border border-brand-green/30 dark:border-brand-green/40 p-3 sm:p-4">
           <p className="text-sm text-neutral-800 dark:text-neutral-200 font-medium mb-1">
-            🎵 Choose a Song
+            {voting ? '🗳️ Vote for the Next Song' : '🎵 Choose a Song'}
           </p>
           <p className="text-xs text-neutral-600 dark:text-neutral-400">
-            Browse our song list below and click "Play Next" on any song to hear it right away. You can request multiple songs and they will be queued up too!
+            {voting
+              ? 'Browse our song list below and tap "Vote" on your favorite. The song with the most votes plays next, then the next most popular, and so on. Rally your friends to push your song to the top!'
+              : 'Browse our song list below and click "Play Next" on any song to hear it right away. You can request multiple songs and they will be queued up too!'}
           </p>
         </div>
       )}
+      {voting && viewerControlEnabled && <VoteStandings standings={standings} />}
       {error && <div role="alert" className="text-red-600">Error loading playlist</div>}
       <div className="flex flex-col gap-2 sm:gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex gap-2 items-center flex-wrap">
@@ -246,6 +293,7 @@ export default function Playlist() {
                             <h3 className="font-medium text-sm" aria-label={`Song ${cleanDisplayName}`}>{cleanDisplayName}</h3>
                             <p className="mt-1 text-xs text-neutral-600 dark:text-neutral-400">
                               {seq.duration ? `${Math.floor(seq.duration/60)}m ${seq.duration%60}s` : 'Duration unknown'}
+                              {voting && voteCounts.has(seq.name) && <span className="ml-2 font-semibold text-brand-green dark:text-brand-gold">· {voteCounts.get(seq.name)} {voteCounts.get(seq.name) === 1 ? 'vote' : 'votes'}</span>}
                             </p>
                             <div className="mt-2 flex gap-2">
                               <button 
@@ -257,7 +305,9 @@ export default function Playlist() {
                                     : 'border-brand-green/40 bg-brand-green/10 dark:bg-brand-green/15 text-brand-green dark:text-brand-gold hover:bg-brand-green/20 dark:hover:bg-brand-green/25'
                                 } disabled:opacity-50 disabled:cursor-not-allowed`}
                               >
-                                {isRequesting ? 'Requesting...' : isSuccess ? '✓ Requested!' : 'Play Next'}
+                                {voting
+                                  ? (isRequesting ? 'Voting...' : isSuccess ? '✓ Voted!' : 'Vote')
+                                  : (isRequesting ? 'Requesting...' : isSuccess ? '✓ Requested!' : 'Play Next')}
                               </button>
                             </div>
                           </div>
