@@ -24,7 +24,7 @@ function PostMedia({ post }: { post: PostItem }) {
         alt={post.alt}
         loading="lazy"
         decoding="async"
-        className="rounded-md w-full h-auto object-cover max-h-[80vh] select-none"
+        className="rounded-md mx-auto w-auto max-w-full h-auto max-h-[80vh] object-contain select-none"
       />
     );
   }

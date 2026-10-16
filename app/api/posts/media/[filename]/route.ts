@@ -1,8 +1,29 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { readFile, stat } from 'fs/promises';
 import path from 'path';
+import sharp from 'sharp';
 import { isValidMediaFilename, resolveInside } from '../../../../../src/lib/safePath';
 import { POSTS_DIR } from '../../../../../src/lib/storagePaths';
+
+// Photos go out upright and web-sized. Phones save the sensor's raw pixels plus
+// an EXIF "rotate me" flag; browsers and apps don't all honour it, which is how
+// one photo showed up sideways on a desktop. Baking the rotation into the pixels
+// (and dropping the EXIF, including GPS) makes every viewer agree. Originals on
+// disk are untouched. Results are memoised: files never change once uploaded.
+const MAX_PHOTO_EDGE = 2560;
+const photoCache = new Map<string, Buffer>();
+
+async function normalizePhoto(filename: string, input: Buffer, ext: string): Promise<Buffer> {
+  const hit = photoCache.get(filename);
+  if (hit) return hit;
+  const img = sharp(input).rotate().resize({
+    width: MAX_PHOTO_EDGE, height: MAX_PHOTO_EDGE, fit: 'inside', withoutEnlargement: true,
+  });
+  const out = await (ext === '.png' ? img.png() : ext === '.webp' ? img.webp({ quality: 85 }) : img.jpeg({ quality: 85, mozjpeg: true })).toBuffer();
+  if (photoCache.size >= 20) photoCache.delete(photoCache.keys().next().value as string);
+  photoCache.set(filename, out);
+  return out;
+}
 
 const MIME_TYPES: Record<string, string> = {
   '.jpg': 'image/jpeg',
@@ -39,8 +60,15 @@ export async function GET(
       return new NextResponse('File not found', { status: 404 });
     }
 
-    const fileBuffer = await readFile(filePath);
     const ext = path.extname(filename).toLowerCase();
+    let fileBuffer = await readFile(filePath);
+    if (['.jpg', '.jpeg', '.png', '.webp'].includes(ext)) {
+      try {
+        fileBuffer = await normalizePhoto(filename, fileBuffer, ext);
+      } catch (e) {
+        console.error('Photo normalize failed, serving original:', e);
+      }
+    }
     const contentType = MIME_TYPES[ext] ?? 'application/octet-stream';
 
     return new NextResponse(fileBuffer as any, {
