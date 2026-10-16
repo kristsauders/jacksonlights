@@ -230,7 +230,7 @@ export default function ShowInfo(){
         <div className="relative z-10 max-w-4xl mx-auto space-y-5">
           <h3 className="font-display text-2xl md:text-3xl font-extrabold tracking-tight text-brand-maroon dark:text-brand-gold">A Family Light Show For Beacon</h3>
           <p className="text-sm md:text-base leading-relaxed text-neutral-700 dark:text-neutral-300">
-            Jackson Lights is a family-run holiday light show right here in Beacon. 2025 marks our <strong>3rd season</strong> sharing synchronized music and pixels with neighbors, friends, and anyone who stops by. The show is completely <strong>free</strong>—it’s simply our way to add a little more sparkle, joy, and togetherness to the community during the holiday season.
+            Jackson Lights is a family-run holiday light show right here in Beacon. 2026 marks our <strong>4th season</strong> sharing synchronized music and pixels with neighbors, friends, and anyone who stops by. The show is completely <strong>free</strong>—it’s simply our way to add a little more sparkle, joy, and togetherness to the community during the holiday season.
           </p>
           <p className="text-xs md:text-sm leading-relaxed text-neutral-600 dark:text-neutral-400">
             Stop, enjoy a few songs, request what plays next, and snap some photos. Thanks for being part of the Beacon holiday magic.

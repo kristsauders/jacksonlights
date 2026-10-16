@@ -5,7 +5,7 @@ import Tabs from './Tabs';
 import Playlist from './Playlist';
 import AdminPanel from './AdminPanel';
 
-// Only the default tab (Playlist) is part of the initial bundle. Everything
+// Only the default tab (see DEFAULT_TAB) is part of the initial bundle. Everything
 // else is fetched when its tab is first opened.
 //
 // This matters most for AdminDashboard: it imports recharts, so every visitor
@@ -29,6 +29,9 @@ const AdminDashboard = dynamic(
   () => import('./AdminDashboard').then((m) => m.AdminDashboard),
   { loading: panelLoading, ssr: false }
 );
+
+// The tab shown when the site loads.
+const DEFAULT_TAB = 'posts';
 
 const TABS = [
   { id: 'playlist', label: 'Song List' },
@@ -70,10 +73,10 @@ const PANELS: Record<string, () => ReactNode> = {
 const KEEP_ALIVE = new Set(['playlist', 'requests', 'admin']);
 
 export default function TabbedSections() {
-  const [active, setActive] = useState('playlist');
+  const [active, setActive] = useState(DEFAULT_TAB);
   // A keep-alive panel is only mounted once it has been opened, so its lazy
   // chunk (and recharts, for admin) still isn't downloaded until needed.
-  const [visited, setVisited] = useState<ReadonlySet<string>>(() => new Set(['playlist']));
+  const [visited, setVisited] = useState<ReadonlySet<string>>(() => new Set([DEFAULT_TAB]));
 
   function changeTab(id: string) {
     setActive(id);
