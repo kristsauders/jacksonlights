@@ -123,8 +123,8 @@ export default function RootLayout({ children }: { children: ReactNode }) {
                   name: 'Jackson Lights Holiday Show',
                   eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode',
                   eventStatus: 'https://schema.org/EventScheduled',
-                  startDate: '2025-11-28',
-                  endDate: '2026-01-02',
+                  startDate: '2026-11-27',
+                  endDate: '2027-01-01',
                   location: {
                     '@type': 'Place',
                     name: 'Beacon, NY',
@@ -137,6 +137,28 @@ export default function RootLayout({ children }: { children: ReactNode }) {
                   },
                   url: 'https://jacksonlights.com',
                   description: 'A synchronized holiday light and music show with community song requests in Beacon, NY.'
+                },
+                {
+                  '@type': 'Event',
+                  name: 'Jackson Lights Preview Night',
+                  eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode',
+                  eventStatus: 'https://schema.org/EventScheduled',
+                  startDate: '2026-11-14T18:00:00-05:00',
+                  isAccessibleForFree: true,
+                  location: {
+                    '@type': 'Place',
+                    name: 'Jackson Lights',
+                    address: {
+                      '@type': 'PostalAddress',
+                      streetAddress: '4 Jackson Street',
+                      addressLocality: 'Beacon',
+                      addressRegion: 'NY',
+                      addressCountry: 'US'
+                    }
+                  },
+                  organizer: { '@type': 'Organization', name: 'Jackson Lights', url: 'https://jacksonlights.com' },
+                  url: 'https://jacksonlights.com',
+                  description: 'Open to everyone. Party at 6 PM with hot cider, cocoa, festive snacks, and a bonfire, followed by the light show at 7 PM. Nightly shows start the day after Thanksgiving.'
                 }
               ]
             })

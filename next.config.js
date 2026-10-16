@@ -33,7 +33,10 @@ const csp = [
   "object-src 'none'",
   "base-uri 'self'",
   "form-action 'self'",
-  "frame-ancestors 'none'",
+  // Only this site and the PulseMesh web player (which embeds the show page next
+  // to its audio stream) may frame us. The admin session cookie is SameSite=Strict,
+  // so it is never sent from inside a cross-site frame.
+  "frame-ancestors 'self' https://player.pulsemesh.io",
   // Rewrites every http:// subresource request on the page to https:// —
   // including same-origin relative fetches like /api/status or /_next/static
   // assets. Correct once actually deployed behind Front Door's TLS; on a
@@ -48,7 +51,8 @@ const csp = [
 const securityHeaders = [
   { key: 'Content-Security-Policy', value: csp },
   { key: 'X-Content-Type-Options', value: 'nosniff' },
-  { key: 'X-Frame-Options', value: 'DENY' },
+  // No X-Frame-Options: it can't allowlist a specific site (only DENY/SAMEORIGIN),
+  // so it would block the PulseMesh player. CSP frame-ancestors above replaces it.
   { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
   { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=(), payment=(), interest-cohort=()' },
   { key: 'Cross-Origin-Opener-Policy', value: 'same-origin' },

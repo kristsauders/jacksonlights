@@ -1,5 +1,6 @@
 "use client";
 import { useCallback, useEffect, useState } from 'react';
+import MapLink from './MapLink';
 
 interface Sparkle { size:number; left:number; top:number; duration:number; delay:number; }
 
@@ -39,15 +40,27 @@ function SeasonStartBanner({ dismiss, sparkles }: { dismiss: () => void; sparkle
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
         </button>
         <div className="flex flex-col md:flex-row md:items-center gap-5 md:gap-8 relative z-10">
-          <div className="flex-1 space-y-2">
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-brand-green dark:text-brand-gold/90">2026 Season Coming Soon</p>
+          <div className="flex-1 space-y-3">
+            <p className="pr-7 text-xs font-semibold uppercase tracking-[0.18em] text-brand-green dark:text-brand-gold/90">
+              Preview Night · <time dateTime="2026-11-14"><span className="sm:hidden">Sat, Nov 14</span><span className="hidden sm:inline">Saturday, November 14</span></time>
+            </p>
             <h2 className="font-display text-lg sm:text-xl font-extrabold text-neutral-900 dark:text-neutral-100 leading-snug">
-              We're getting started! 🎄✨
+              Join us for Preview Night! 🎄✨
             </h2>
-            <p className="text-[13px] sm:text-sm leading-relaxed text-neutral-700 dark:text-neutral-300 max-w-2xl">Work on the 2026 display is underway, and we're excited for another great holiday season of lights, new music, and more. I'll be posting updates as I build things out, so follow along behind the scenes and check back for show dates soon.</p>
+            <p className="text-[13px] sm:text-sm leading-relaxed text-neutral-700 dark:text-neutral-300 max-w-2xl">
+              Come kick off the 2026 season with us. Everyone is welcome, so bring your family, friends, and neighbors!
+            </p>
+            <ul className="text-[13px] sm:text-sm space-y-1.5 text-neutral-800 dark:text-neutral-200">
+              <li><span aria-hidden="true">🎉</span> <strong>6:00 PM</strong> · Party starts</li>
+              <li><span aria-hidden="true">✨</span> <strong>7:00 PM</strong> · Light show begins</li>
+              <li><span aria-hidden="true">🔥</span> Hot cider &amp; cocoa, festive snacks, and a bonfire</li>
+            </ul>
+            <p className="text-[12px] sm:text-[13px] leading-relaxed text-neutral-600 dark:text-neutral-400 max-w-2xl">
+              Then the lights are on <strong>every night</strong> starting the day after Thanksgiving (Friday, November 27) through New Year&apos;s Day (Friday, January 1).
+            </p>
           </div>
           <div className="flex flex-row md:flex-col gap-3 md:gap-4">
-            <a href="#updates" onClick={(e)=>{ e.preventDefault(); activateTabAndScroll('posts'); }} className="inline-flex items-center gap-2 rounded-lg px-4 py-2.5 bg-brand-green text-white text-xs font-semibold shadow hover:bg-brand-pine transition">Behind The Scenes<span className="hidden sm:inline">→</span></a>
+            <MapLink className="inline-flex items-center gap-2 rounded-lg px-4 py-2.5 bg-brand-green text-white text-xs font-semibold shadow hover:bg-brand-pine transition">Get Directions<span className="hidden sm:inline">→</span></MapLink>
             <a href="#gallery" onClick={(e)=>{ e.preventDefault(); activateTabAndScroll('gallery'); }} className="inline-flex items-center gap-2 rounded-lg px-4 py-2.5 bg-neutral-900/90 dark:bg-neutral-800/80 text-white text-xs font-semibold shadow hover:bg-neutral-700 dark:hover:bg-neutral-700 transition">Watch Show Videos</a>
           </div>
         </div>
