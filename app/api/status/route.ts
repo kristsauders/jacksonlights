@@ -20,7 +20,6 @@ const PUBLIC_KEYS = [
   'playingNext',
   'playingNextFromSchedule',
   'sequences',
-  'preferences',
 ] as const;
 
 function project(details: any) {
@@ -29,6 +28,14 @@ function project(details: any) {
     for (const key of PUBLIC_KEYS) {
       if (key in details) out[key] = details[key];
     }
+    // preferences also carries the show's coordinates and the secret location
+    // code viewers type in when the location check is on. Pass only the switches
+    // the page actually reads.
+    const prefs = details.preferences;
+    out.preferences = {
+      viewerControlEnabled: prefs?.viewerControlEnabled === true,
+      viewerControlMode: typeof prefs?.viewerControlMode === 'string' ? prefs.viewerControlMode : undefined,
+    };
     // Live voting standings. Remote Falcon also lists who voted (by IP address)
     // on each entry, so rebuild every row from just the public fields.
     if (Array.isArray(details.votes)) {

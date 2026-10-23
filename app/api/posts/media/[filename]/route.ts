@@ -11,17 +11,19 @@ import { POSTS_DIR } from '../../../../../src/lib/storagePaths';
 // (and dropping the EXIF, including GPS) makes every viewer agree. Originals on
 // disk are untouched. Results are memoised: files never change once uploaded.
 const MAX_PHOTO_EDGE = 2560;
-const photoCache = new Map<string, Buffer>();
+// Promises, not buffers, so simultaneous first requests share one resize.
+const photoCache = new Map<string, Promise<Buffer>>();
 
-async function normalizePhoto(filename: string, input: Buffer, ext: string): Promise<Buffer> {
+function normalizePhoto(filename: string, input: Buffer, ext: string): Promise<Buffer> {
   const hit = photoCache.get(filename);
   if (hit) return hit;
   const img = sharp(input).rotate().resize({
     width: MAX_PHOTO_EDGE, height: MAX_PHOTO_EDGE, fit: 'inside', withoutEnlargement: true,
   });
-  const out = await (ext === '.png' ? img.png() : ext === '.webp' ? img.webp({ quality: 85 }) : img.jpeg({ quality: 85, mozjpeg: true })).toBuffer();
+  const out = (ext === '.png' ? img.png() : ext === '.webp' ? img.webp({ quality: 85 }) : img.jpeg({ quality: 85, mozjpeg: true })).toBuffer();
   if (photoCache.size >= 20) photoCache.delete(photoCache.keys().next().value as string);
   photoCache.set(filename, out);
+  out.catch(() => photoCache.delete(filename));
   return out;
 }
 
@@ -66,7 +68,9 @@ export async function GET(
       try {
         fileBuffer = await normalizePhoto(filename, fileBuffer, ext);
       } catch (e) {
-        console.error('Photo normalize failed, serving original:', e);
+        // The original still has its EXIF (including GPS), so don't hand it out.
+        console.error('Photo normalize failed:', e);
+        return new NextResponse('Internal Server Error', { status: 500 });
       }
     }
     const contentType = MIME_TYPES[ext] ?? 'application/octet-stream';
