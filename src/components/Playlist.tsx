@@ -107,9 +107,6 @@ const CATEGORY_MAP: Record<string, 'Christmas' | 'Pop' | 'Electronic' | 'Kids' |
   "Panic! At The Disco - Into the Unknown": 'Kids',
   "Wicked - Defying Gravity": 'Kids',
 
-  // Other (listed so they don't look unmapped)
-  "Jackson Lights - Full Show 2026 (25 minutes long)": 'Other',
-  "Show Intro": 'Other',
 };
 
 function categorize(displayName: string): 'Christmas' | 'Pop' | 'Electronic' | 'Kids' | 'Other' {
@@ -155,6 +152,40 @@ function VoteStandings({ standings }: { standings: VoteRow[] }) {
   );
 }
 
+// The whole show as one long sequence. It gets its own card above the song
+// list instead of sitting in a category, to invite people to watch it all.
+const isFullShow = (s: { displayName?: string }) => /full show/i.test(s.displayName ?? '');
+
+function FeaturedShow({ seq, voting, enabled, votes, requesting, success, onPick }: {
+  seq: any; voting: boolean; enabled: boolean; votes?: number;
+  requesting: boolean; success: boolean; onPick: () => void;
+}) {
+  const year = seq.displayName.match(/20\d\d/)?.[0];
+  const minutes = seq.duration ? Math.floor(seq.duration / 60) : null;
+  const label = voting
+    ? (requesting ? 'Voting...' : success ? '✓ Voted!' : 'Vote for the Full Show')
+    : (requesting ? 'Requesting...' : success ? '✓ Requested!' : 'Play the Full Show');
+  return (
+    <section aria-label="Featured: the full show" className="relative overflow-hidden rounded-xl border border-brand-gold/60 bg-gradient-to-br from-brand-maroon/10 via-brand-cream/60 to-brand-gold/30 dark:from-brand-maroon/30 dark:via-neutral-900/80 dark:to-brand-green/30 p-4 sm:p-5 shadow-sm">
+      <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-brand-maroon dark:text-brand-gold">★ The Main Event</p>
+      <div className="mt-1.5 flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-6">
+        <div className="flex-1 min-w-0">
+          <h3 className="font-display text-lg sm:text-xl font-extrabold text-neutral-900 dark:text-neutral-100">The Full {year ? `${year} ` : ''}Show 🎄</h3>
+          <p className="mt-1 text-sm text-neutral-700 dark:text-neutral-300">
+            Our whole show from start to finish, every song back to back.{minutes ? <> About <strong>{minutes} minutes</strong>, so grab a cocoa and stay for the whole thing!</> : ' Grab a cocoa and stay for the whole thing!'}
+          </p>
+          {voting && !!votes && <p className="mt-1 text-xs font-semibold text-brand-green dark:text-brand-gold">{votes} {votes === 1 ? 'vote' : 'votes'}</p>}
+        </div>
+        <button
+          onClick={onPick}
+          disabled={requesting || !enabled}
+          className={`focus-ring shrink-0 rounded-lg px-5 py-2.5 text-sm font-semibold shadow transition ${success ? 'bg-green-600 text-white' : 'bg-brand-green text-white hover:bg-brand-pine'} disabled:opacity-50 disabled:cursor-not-allowed`}
+        >{label}</button>
+      </div>
+    </section>
+  );
+}
+
 const cleanSongName = (name: string) => name.replace(/\s*2025\s*40fps\s*$/i, '').trim();
 
 export default function Playlist() {
@@ -185,6 +216,7 @@ export default function Playlist() {
     };
     
     sequences.forEach(s => {
+      if (isFullShow(s)) return; // shown on its own card
       const cat = categorize(s.displayName);
       const matchesQuery = !query || s.displayName?.toLowerCase().includes(query.toLowerCase());
       if (matchesQuery) {
@@ -194,6 +226,8 @@ export default function Playlist() {
     
     return categories;
   }, [sequences, query]);
+
+  const fullShow = useMemo(() => sequences.find(isFullShow), [sequences]);
 
   const totalFiltered = Object.values(grouped).reduce((sum, arr) => sum + arr.length, 0);
 
@@ -269,6 +303,17 @@ export default function Playlist() {
         </div>
       )}
       {voting && viewerControlEnabled && <VoteStandings standings={standings} />}
+      {fullShow && (
+        <FeaturedShow
+          seq={fullShow}
+          voting={voting}
+          enabled={viewerControlEnabled}
+          votes={voteCounts.get(fullShow.name)}
+          requesting={requestingSeq === fullShow.name}
+          success={successSeq === fullShow.name}
+          onPick={() => handleRequest(fullShow.name)}
+        />
+      )}
       {error && <div role="alert" className="text-red-600">Error loading playlist</div>}
       <div className="flex flex-col gap-2 sm:gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex gap-2 items-center flex-wrap">
