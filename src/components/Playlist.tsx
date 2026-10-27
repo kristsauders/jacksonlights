@@ -152,8 +152,9 @@ function VoteStandings({ standings }: { standings: VoteRow[] }) {
   );
 }
 
-// The whole show as one long sequence. It gets its own card above the song
-// list instead of sitting in a category, to invite people to watch it all.
+// The season's headline production: its own set of songs mixed into one long
+// sequence. It gets its own card above the song list instead of sitting in a
+// category, to invite people to watch it all.
 const isFullShow = (s: { displayName?: string }) => /full show/i.test(s.displayName ?? '');
 
 function FeaturedShow({ seq, voting, enabled, votes, requesting, success, onPick }: {
@@ -172,7 +173,10 @@ function FeaturedShow({ seq, voting, enabled, votes, requesting, success, onPick
         <div className="flex-1 min-w-0">
           <h3 className="font-display text-lg sm:text-xl font-extrabold text-neutral-900 dark:text-neutral-100">The Full {year ? `${year} ` : ''}Show 🎄</h3>
           <p className="mt-1 text-sm text-neutral-700 dark:text-neutral-300">
-            Our whole show from start to finish, every song back to back.{minutes ? <> About <strong>{minutes} minutes</strong>, so grab a cocoa and stay for the whole thing!</> : ' Grab a cocoa and stay for the whole thing!'}
+            Our big {year ? `${year} ` : ''}production: lots of brand-new songs mixed seamlessly together, with a dramatic intro and more.{minutes ? <> It runs about <strong>{minutes} minutes</strong>, so grab a cocoa and stay for the whole thing!</> : ' Grab a cocoa and stay for the whole thing!'}
+          </p>
+          <p className="mt-1 text-xs text-neutral-600 dark:text-neutral-400">
+            Want something shorter? There are lots of other songs to choose from below.
           </p>
           {voting && !!votes && <p className="mt-1 text-xs font-semibold text-brand-green dark:text-brand-gold">{votes} {votes === 1 ? 'vote' : 'votes'}</p>}
         </div>
