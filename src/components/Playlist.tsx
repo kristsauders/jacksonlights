@@ -25,6 +25,16 @@ const CATEGORY_MAP: Record<string, 'Christmas' | 'Pop' | 'Electronic' | 'Kids' |
   "Snoop Dogg - Doggy Dogg Christmas": 'Christmas',
   "Sia - Santa's Coming For Us": 'Christmas',
   "The Pretty Reckless - Where Are You Christmas": 'Christmas',
+  "Alicia Moffet - Winter Wonderland": 'Christmas',
+  "Jack Johnson - Rudolph The Red Nosed Reindeer": 'Christmas',
+  "Kaskade - Christmas Is Here": 'Christmas',
+  "LalalaGirl - Christmas Mashup 2016": 'Christmas',
+  "Meghan Trainor - My Kind of Present": 'Christmas',
+  "Pentatonix - Pure Imagination Christmas Time Is Here": 'Christmas',
+  "Samuel Kim - Imperial March x Carol of the Bells": 'Christmas',
+  "The Waitresses - Christmas Wrapping": 'Christmas',
+  "The Waitresses - Christmas Wrapping (v1)": 'Christmas',
+  "Tommee Profitt - We Three Kings": 'Christmas',
   
   // Pop
   "Ajr - Bang!": 'Pop',
@@ -52,6 +62,21 @@ const CATEGORY_MAP: Record<string, 'Christmas' | 'Pop' | 'Electronic' | 'Kids' |
   "The Weeknd - Blinding Lights": 'Pop',
   "The Weeknd feat Ariana Grande - Save Your Tears (Remix) 2025 40fps": 'Pop',
   "Alex Warren - Ordinary": 'Pop',
+  "AJR - Bang!": 'Pop',
+  "Bebe Rexha - New Religion": 'Pop',
+  "Beyonce - Texas Hold 'Em": 'Pop',
+  "Elton John & Dua Lipa - Cold Heart": 'Pop',
+  "Journey - Don't Stop Believin'": 'Pop',
+  "Lindsey Stirling ft. David Archuleta - Magic": 'Pop',
+  "Mark Ronson ft. Bruno Mars - Uptown Funk": 'Pop',
+  "Masked Wolf - Astronaut in the Ocean": 'Pop',
+  "Muse - Nightshift Superstar": 'Pop',
+  "Pentatonix - Daft Punk": 'Pop',
+  "Pink - Get the Party Started": 'Pop',
+  "Post Malone - Sunflower": 'Pop',
+  "Ruelle - Madness": 'Pop',
+  "Tai Verdes - A-O-K": 'Pop',
+  "Tommee Profitt - Mad World": 'Pop',
   
   // Electronic
   "Majestic x Boney M - Rasputin": 'Electronic',
@@ -59,6 +84,8 @@ const CATEGORY_MAP: Record<string, 'Christmas' | 'Pop' | 'Electronic' | 'Kids' |
   "Teddy Swims - Lose Control (Tiesto Remix)": 'Electronic',
   "Major Lazer - Lean On": 'Electronic',
   "Zombic & Felix Schorn - Zombie (Remix)": 'Electronic',
+  "Luude - Down Under": 'Electronic',
+  "Majestic x Boney M. - Rasputin": 'Electronic',
   
   // Kids
   "Frozen -  Let It Go": 'Kids',
@@ -72,7 +99,17 @@ const CATEGORY_MAP: Record<string, 'Christmas' | 'Pop' | 'Electronic' | 'Kids' |
   "KPop Demon Hunters - Your Idol": 'Kids',
   "Parry Gripp - It's Raining Tacos On Christmas Eve": 'Kids',
   "Crowder - The Elf Song": 'Kids',
-  // "Samuel Kim - Imperial March x Carol of the Bells": 'Christmas',
+  "Cynthia Erivo & Ariana Grande - Defying Gravity": 'Kids',
+  "Griff - Pure Imagination": 'Kids',
+  "Gummibar - I Am A Gummy Bear": 'Kids',
+  "Idina Menzel - Let It Go": 'Kids',
+  "KPop Demon Hunters - Golden": 'Kids',
+  "Panic! At The Disco - Into the Unknown": 'Kids',
+  "Wicked - Defying Gravity": 'Kids',
+
+  // Other (listed so they don't look unmapped)
+  "Jackson Lights - Full Show 2026 (25 minutes long)": 'Other',
+  "Show Intro": 'Other',
 };
 
 function categorize(displayName: string): 'Christmas' | 'Pop' | 'Electronic' | 'Kids' | 'Other' {
