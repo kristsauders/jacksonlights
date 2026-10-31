@@ -1,5 +1,5 @@
 "use client";
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import useSWR from 'swr';
 import { motion } from 'framer-motion';
 import { POSTS_KEY, postsFetcher } from '../lib/swr';
@@ -28,10 +28,6 @@ function friendlyDate(iso: string): string {
 }
 
 function PostMedia({ post, onOpen }: { post: PostItem; onOpen(): void }) {
-  // Hook must run before any early return — React requires the same hook order
-  // on every render of a component.
-  const [orientation, setOrientation] = useState<'portrait' | 'landscape' | 'square' | null>(null);
-
   // Photos sit in a letterboxed frame of a fixed maximum height, so a tall
   // phone photo doesn't fill the whole screen. Tap to see it full size.
   if (post.type === 'image') {
@@ -47,6 +43,54 @@ function PostMedia({ post, onOpen }: { post: PostItem; onOpen(): void }) {
       </button>
     );
   }
+  return <PostVideo post={post} />;
+}
+
+// The one feed video playing right now, so scrolling between two videos that
+// are both on screen never plays them over each other.
+let playingVideo: HTMLVideoElement | null = null;
+
+// Pause a video on the feed's behalf, marked so onPause can tell it apart from
+// the viewer pressing pause.
+function autoPause(v: HTMLVideoElement) {
+  if (v.paused) return;
+  v.dataset.autoPause = '1';
+  v.pause();
+}
+
+/**
+ * Plays like a social feed: muted and looping while most of it is on screen,
+ * paused once it scrolls away. Viewers can unmute with the controls. If they
+ * pause it themselves it stays paused until they press play again. Skipped for
+ * prefers-reduced-motion and save-data, where it behaves like a normal video.
+ */
+function PostVideo({ post }: { post: PostItem }) {
+  const [orientation, setOrientation] = useState<'portrait' | 'landscape' | 'square' | null>(null);
+  const ref = useRef<HTMLVideoElement>(null);
+  const pausedByViewer = useRef(false);
+
+  useEffect(() => {
+    const v = ref.current;
+    if (!v) return;
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    if ((navigator as any).connection?.saveData) return;
+
+    // Browsers only allow autoplay with sound off. React doesn't reliably set
+    // the muted attribute, so set the property directly.
+    v.muted = true;
+    const io = new IntersectionObserver(([entry]) => {
+      if (entry.intersectionRatio >= 0.6) {
+        if (v.paused && !pausedByViewer.current) v.play().catch(() => {});
+      } else {
+        autoPause(v);
+      }
+    }, { threshold: [0, 0.6] });
+    io.observe(v);
+    return () => {
+      io.disconnect();
+      if (playingVideo === v) playingVideo = null;
+    };
+  }, []);
 
   const wrapperBase =
     'relative w-full mx-auto transition-all';
@@ -61,17 +105,32 @@ function PostMedia({ post, onOpen }: { post: PostItem; onOpen(): void }) {
     <div className="rounded-xl bg-black/40">
       <div className={`${wrapperBase} ${wrapperClass}`}>
         <video
+          ref={ref}
           key={post.src}
           className="rounded-xl w-full h-auto max-h-[60vh] object-contain bg-black"
           src={post.src}
           controls
+          muted
+          loop
           playsInline
           preload="metadata"
           controlsList="nodownload"
+          onPlay={(e) => {
+            const v = e.currentTarget;
+            pausedByViewer.current = false;
+            if (playingVideo && playingVideo !== v) autoPause(playingVideo);
+            playingVideo = v;
+          }}
+          onPause={(e) => {
+            const v = e.currentTarget;
+            if (v.dataset.autoPause) delete v.dataset.autoPause;
+            else pausedByViewer.current = true;
+            if (playingVideo === v) playingVideo = null;
+          }}
           onLoadedMetadata={(e) => {
             const v = e.currentTarget;
-              const w = v.videoWidth;
-              const h = v.videoHeight;
+            const w = v.videoWidth;
+            const h = v.videoHeight;
             if (w && h) {
               if (w === h) setOrientation('square');
               else if (w > h) setOrientation('landscape');
