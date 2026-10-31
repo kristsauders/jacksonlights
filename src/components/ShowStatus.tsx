@@ -3,37 +3,67 @@ import useSWR from 'swr';
 import { motion } from 'framer-motion';
 import { fetcher, statusSwrConfig } from '../lib/swr';
 
+// Sequences that aren't songs: the show playing these means the lights are off
+// or idle, so visitors get a friendly "next show" line instead of the file name.
+const IDLE_SEQUENCE = /^(all\s*off|off|blank|black(out)?|idle)$/i;
+
+// Clean up display names by removing "2025 40fps"
+const cleanName = (name?: string) => (name ? name.replace(/\s*2025\s*40fps\s*$/i, '').trim() : '');
+
+// When the show is next on, in Beacon time. Dates match PreseasonBanner and the
+// nightly 5–10 PM schedule.
+function nextShow(): string {
+  const now = new Date();
+  const day = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/New_York' }).format(now);
+  const hour = Number(new Intl.DateTimeFormat('en-US', { timeZone: 'America/New_York', hour: 'numeric', hourCycle: 'h23' }).format(now));
+  if (day < '2026-11-14') return 'Preview Night: Sat, Nov 14 at 7 PM';
+  if (day === '2026-11-14') return hour < 19 ? 'Preview Night: tonight at 7 PM' : 'Starting any minute';
+  if (day < '2026-11-27') return 'Opening night: Fri, Nov 27 at 5 PM';
+  if (day > '2027-01-01' || (day === '2027-01-01' && hour >= 22)) return 'See you next season!';
+  if (hour < 17) return 'Next show: tonight at 5 PM';
+  if (hour >= 22) return 'Next show: tomorrow at 5 PM';
+  return 'Starting any minute';
+}
+
+function Hours() {
+  return (
+    <div className="meta-text sm:text-right">
+      <p className="font-semibold text-neutral-900 dark:text-neutral-100">Nightly · 5–10 PM</p>
+      <p>Nov 27 – Jan 1 · Weather permitting</p>
+    </div>
+  );
+}
+
 export default function ShowStatus() {
   const { data, error, isLoading } = useSWR('/api/status', fetcher, statusSwrConfig);
 
-  if (error) return <div role="alert" className="text-red-600">Error loading status</div>;
-  if (isLoading || !data) return <div className="animate-pulse text-sm">Loading status…</div>;
+  const song = cleanName(data?.playingNow);
+  const playing = !!song && !IDLE_SEQUENCE.test(song);
 
-  const prefs = data.preferences || {};
-  
-  // Clean up display names by removing "2025 40fps"
-  const cleanName = (name: string) => name ? name.replace(/\s*2025\s*40fps\s*$/i, '').trim() : '';
-  const nowPlaying = cleanName(data.playingNow) || '—';
-  const upNext = cleanName(data.playingNext || data.playingNextFromSchedule) || '—';
+  let label = 'Show status';
+  let headline = 'Checking what’s on…';
+  if (error) headline = 'Live status unavailable';
+  else if (!isLoading && data) {
+    label = playing ? 'Now playing' : 'The lights are off';
+    headline = playing ? song : nextShow();
+  }
 
   return (
-    <div className="grid gap-4 sm:gap-6 lg:grid-cols-2" aria-live="polite">
-  <div className="p-3 sm:p-4 rounded-lg bg-brand-cream/70 dark:bg-neutral-900 border border-brand-maroon/20 dark:border-brand-pine/40">
-        <h3 className="text-sm font-semibold uppercase tracking-wide mb-2">Now Playing</h3>
+    <section aria-labelledby="status-heading" className="surface px-5 py-4 flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-6">
+      <h2 id="status-heading" className="sr-only">Current show status</h2>
+      <div className="flex-1 min-w-0" aria-live="polite">
+        <p className="eyebrow flex items-center gap-2 !text-neutral-500 dark:!text-neutral-400">
+          <span className={`h-2 w-2 rounded-full ${playing ? 'bg-brand-green animate-pulse' : 'bg-neutral-400 dark:bg-neutral-600'}`} aria-hidden="true" />
+          {label}
+        </p>
         <motion.p
-          key={data.playingNow ?? 'none'}
-          initial={{ opacity: 0, y: 6 }}
+          key={headline}
+          initial={{ opacity: 0, y: 4 }}
           animate={{ opacity: 1, y: 0 }}
-          className="text-lg font-medium"
-        >{nowPlaying}</motion.p>
-        {/* <p className="mt-2 text-xs text-neutral-600 dark:text-neutral-400">Up Next: {upNext}</p> */}
+          className="mt-1 text-lg font-semibold text-neutral-900 dark:text-neutral-100 truncate"
+        >{headline}</motion.p>
       </div>
-  <div className="p-3 sm:p-4 rounded-lg bg-brand-cream/70 dark:bg-neutral-900 border border-brand-maroon/20 dark:border-brand-pine/40">
-        <h3 className="text-sm font-semibold uppercase tracking-wide mb-2">Show Hours</h3>
-        <p className="text-sm leading-relaxed">Nightly • 5:00 PM – 10:00 PM<br /><span className="text-xs text-neutral-600 dark:text-neutral-400">November 27 – January 1</span><br /><span className="text-xs text-neutral-600 dark:text-neutral-400">Weather permitting</span></p>
-        <p className="mt-3 text-xs text-neutral-500 dark:text-neutral-500">{prefs.viewerControlMode === 'VOTING' ? 'Song Voting' : 'Song Requests'}: Currently {prefs.viewerControlEnabled ? `Enabled` : 'Disabled'}</p>
-      </div>
-      
-    </div>
+      <Hours />
+    </section>
   );
 }

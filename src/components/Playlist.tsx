@@ -109,6 +109,8 @@ const CATEGORY_MAP: Record<string, 'Christmas' | 'Pop' | 'Electronic' | 'Kids' |
 
 };
 
+const CATEGORY_ORDER = ['Christmas', 'Pop', 'Electronic', 'Kids', 'Other'] as const;
+
 function categorize(displayName: string): 'Christmas' | 'Pop' | 'Electronic' | 'Kids' | 'Other' {
   // Try exact match first
   if (CATEGORY_MAP[displayName]) {
@@ -132,22 +134,22 @@ function rankVotes(raw: unknown): VoteRow[] {
 function VoteStandings({ standings }: { standings: VoteRow[] }) {
   const top = standings.slice(0, 10);
   return (
-    <section aria-label="Current voting standings" className="rounded-lg border border-brand-gold/50 bg-gradient-to-br from-brand-cream/60 to-white/70 dark:from-brand-pine/40 dark:to-neutral-900/70 p-3 sm:p-4">
-      <h3 className="text-sm font-semibold uppercase tracking-wide text-brand-maroon dark:text-brand-gold mb-2">Top Votes</h3>
+    <section aria-label="Current voting standings" className="surface p-4 sm:p-5">
+      <h3 className="eyebrow mb-3">Top votes</h3>
       {top.length === 0 ? (
-        <p className="text-sm text-neutral-600 dark:text-neutral-400">No votes yet. Be the first to vote!</p>
+        <p className="meta-text">No votes yet. Be the first to vote!</p>
       ) : (
         <ol className="space-y-1.5">
           {top.map((v, i) => (
             <li key={v.name} className="flex items-center gap-3 text-sm">
               <span className={`w-6 shrink-0 text-center font-bold ${i === 0 ? 'text-brand-maroon dark:text-brand-gold' : 'text-neutral-500'}`}>{i === 0 ? '🏆' : i + 1}</span>
               <span className={`flex-1 min-w-0 truncate ${i === 0 ? 'font-semibold' : ''}`}>{cleanSongName(v.displayName || v.name)}</span>
-              <span className="shrink-0 tabular-nums text-xs font-semibold text-brand-green dark:text-brand-gold">{v.votes} {v.votes === 1 ? 'vote' : 'votes'}</span>
+              <span className="shrink-0 tabular-nums text-sm font-semibold text-brand-green dark:text-brand-gold">{v.votes} {v.votes === 1 ? 'vote' : 'votes'}</span>
             </li>
           ))}
         </ol>
       )}
-      {top.length > 0 && <p className="mt-2 text-xs text-neutral-600 dark:text-neutral-400">The top song plays next. Updates every few seconds.</p>}
+      {top.length > 0 && <p className="meta-text mt-3">The top song plays next. Updates every few seconds.</p>}
     </section>
   );
 }
@@ -167,23 +169,23 @@ function FeaturedShow({ seq, voting, enabled, votes, requesting, success, onPick
     ? (requesting ? 'Voting...' : success ? '✓ Voted!' : 'Vote for the Full Show')
     : (requesting ? 'Requesting...' : success ? '✓ Requested!' : 'Play the Full Show');
   return (
-    <section aria-label="Featured: the full show" className="relative overflow-hidden rounded-xl border border-brand-gold/60 bg-gradient-to-br from-brand-maroon/10 via-brand-cream/60 to-brand-gold/30 dark:from-brand-maroon/30 dark:via-neutral-900/80 dark:to-brand-green/30 p-4 sm:p-5 shadow-sm">
-      <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-brand-maroon dark:text-brand-gold">★ The Main Event</p>
+    <section aria-label="Featured: the full show" className="surface relative overflow-hidden !border-brand-gold/50 bg-gradient-to-br from-brand-gold/15 via-transparent to-brand-red/10 p-5 sm:p-6">
+      <p className="eyebrow">★ The main event</p>
       <div className="mt-1.5 flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-6">
         <div className="flex-1 min-w-0">
-          <h3 className="font-display text-lg sm:text-xl font-extrabold text-neutral-900 dark:text-neutral-100">The Full {year ? `${year} ` : ''}Show 🎄</h3>
-          <p className="mt-1 text-sm text-neutral-700 dark:text-neutral-300">
+          <h3 className="section-title">The Full {year ? `${year} ` : ''}Show 🎄</h3>
+          <p className="body-text mt-1.5">
             Our big {year ? `${year} ` : ''}production: lots of brand-new songs mixed seamlessly together, with a dramatic intro and more.{minutes ? <> It runs about <strong>{minutes} minutes</strong>, so grab a cocoa and stay for the whole thing!</> : ' Grab a cocoa and stay for the whole thing!'}
           </p>
-          <p className="mt-1 text-xs text-neutral-600 dark:text-neutral-400">
+          <p className="meta-text mt-1.5">
             Want something shorter? There are lots of other songs to choose from below.
           </p>
-          {voting && !!votes && <p className="mt-1 text-xs font-semibold text-brand-green dark:text-brand-gold">{votes} {votes === 1 ? 'vote' : 'votes'}</p>}
+          {voting && !!votes && <p className="mt-1.5 text-sm font-semibold text-brand-green dark:text-brand-gold">{votes} {votes === 1 ? 'vote' : 'votes'}</p>}
         </div>
         <button
           onClick={onPick}
           disabled={requesting || !enabled}
-          className={`focus-ring shrink-0 rounded-lg px-5 py-2.5 text-sm font-semibold shadow transition ${success ? 'bg-green-600 text-white' : 'bg-brand-green text-white hover:bg-brand-pine'} disabled:opacity-50 disabled:cursor-not-allowed`}
+          className={`btn-primary shrink-0 ${success ? '!bg-green-600' : ''}`}
         >{label}</button>
       </div>
     </section>
@@ -197,7 +199,9 @@ export default function Playlist() {
   const { data, error, isLoading } = useSWR('/api/status', fetcher, statusSwrConfig);
   const { mutate } = useSWRConfig();
   const [query, setQuery] = useState('');
-  const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set([]));
+  // null until the visitor opens or closes a category themselves; until then
+  // the first category with songs starts open so the list isn't just headers.
+  const [expandedCategories, setExpandedCategories] = useState<Set<string> | null>(null);
   const [requestingSeq, setRequestingSeq] = useState<string | null>(null);
   const [successSeq, setSuccessSeq] = useState<string | null>(null);
 
@@ -268,9 +272,14 @@ export default function Playlist() {
     }
   }
 
+  const firstCategory = CATEGORY_ORDER.find(cat => grouped[cat].length > 0);
+  // While searching, every category with a match is open so results show up.
+  const isOpen = (cat: string) =>
+    query ? true : expandedCategories ? expandedCategories.has(cat) : cat === firstCategory;
+
   function toggleCategory(cat: string) {
     setExpandedCategories(prev => {
-      const next = new Set(prev);
+      const next = new Set(prev ?? (firstCategory ? [firstCategory] : []));
       if (next.has(cat)) {
         next.delete(cat);
       } else {
@@ -283,23 +292,23 @@ export default function Playlist() {
   return (
     <div className="space-y-3 sm:space-y-4">
       {!viewerControlEnabled && (
-        <div className="rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-300 dark:border-amber-700/50 p-3 sm:p-4">
-          <p className="text-sm text-amber-900 dark:text-amber-200 font-medium mb-1">
-            {voting ? '⚠️ Voting Currently Closed' : '⚠️ Requests Currently Disabled'}
+        <div className="surface !border-amber-500/40 !bg-amber-500/10 px-5 py-4">
+          <p className="text-sm font-semibold text-amber-900 dark:text-amber-200 mb-1">
+            {voting ? 'Voting is closed right now' : 'Song requests are off right now'}
           </p>
-          <p className="text-xs text-amber-800 dark:text-amber-300">
+          <p className="text-sm text-amber-800 dark:text-amber-200/80">
             {voting
-              ? 'Voting is closed right now. Check back when the show is running to vote for your favorites!'
-              : 'Song requests are disabled right now. Check back when the show is running to request your favorites!'}
+              ? 'Check back when the show is running to vote for your favorites!'
+              : 'Check back when the show is running to request your favorites!'}
           </p>
         </div>
       )}
       {viewerControlEnabled && (
-        <div className="rounded-lg bg-brand-green/10 dark:bg-brand-green/15 border border-brand-green/30 dark:border-brand-green/40 p-3 sm:p-4">
-          <p className="text-sm text-neutral-800 dark:text-neutral-200 font-medium mb-1">
-            {voting ? '🗳️ Vote for the Next Song' : '🎵 Choose a Song'}
+        <div className="surface !border-brand-green/40 !bg-brand-green/10 px-5 py-4">
+          <p className="text-sm font-semibold text-neutral-900 dark:text-white mb-1">
+            {voting ? '🗳️ Vote for the next song' : '🎵 Choose a song'}
           </p>
-          <p className="text-xs text-neutral-600 dark:text-neutral-400">
+          <p className="text-sm text-neutral-700 dark:text-neutral-300">
             {voting
               ? 'Browse our song list below and tap "Vote" on your favorite. The song with the most votes plays next, then the next most popular, and so on. Rally your friends to push your song to the top!'
               : 'Browse our song list below and click "Play Next" on any song to hear it right away. You can request multiple songs and they will be queued up too!'}
@@ -318,23 +327,22 @@ export default function Playlist() {
           onPick={() => handleRequest(fullShow.name)}
         />
       )}
-      {error && <div role="alert" className="text-red-600">Error loading playlist</div>}
-      <div className="flex flex-col gap-2 sm:gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex gap-2 items-center flex-wrap">
-          <label className="text-xs font-medium" htmlFor="filter">Search:</label>
-          <input id="filter" aria-label="Search songs" value={query} onChange={e => setQuery(e.target.value)} className="px-2 py-1 rounded border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-900 text-sm" placeholder="Type to filter" />
-        </div>
-        <p className="text-xs text-neutral-600 dark:text-neutral-500">{totalFiltered} songs</p>
+      {error && <div role="alert" className="meta-text">The song list couldn’t load. Please try again in a moment.</div>}
+      <div className="relative">
+        <label className="sr-only" htmlFor="filter">Search songs</label>
+        <svg className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-neutral-400" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" /></svg>
+        <input id="filter" type="search" value={query} onChange={e => setQuery(e.target.value)} className="field !rounded-full !py-3 !pl-11 !pr-24 text-base" placeholder="Search songs or artists" />
+        <span className="meta-text pointer-events-none absolute right-4 top-1/2 -translate-y-1/2">{totalFiltered} {totalFiltered === 1 ? 'song' : 'songs'}</span>
       </div>
       
       {(isLoading && !sequences.length) ? (
         <div className="space-y-4">
-          {['Christmas', 'Pop', 'Electronic', 'Kids', 'Other'].map(cat => (
+          {CATEGORY_ORDER.map(cat => (
             <div key={cat} className="animate-pulse">
-              <div className="h-10 bg-neutral-200 dark:bg-neutral-800 rounded-lg mb-2" />
+              <div className="h-12 bg-neutral-200 dark:bg-white/5 rounded-2xl mb-2" />
               <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                 {Array.from({ length: 3 }).map((_, i) => (
-                  <div key={i} className="h-24 bg-neutral-100 dark:bg-neutral-900 rounded-lg" />
+                  <div key={i} className="h-24 bg-neutral-100 dark:bg-white/5 rounded-xl" />
                 ))}
               </div>
             </div>
@@ -342,23 +350,24 @@ export default function Playlist() {
         </div>
       ) : (
         <div className="space-y-4">
-          {(['Christmas', 'Pop', 'Electronic', 'Kids', 'Other'] as const).map(cat => {
+          {CATEGORY_ORDER.map(cat => {
             const songs = grouped[cat];
-            const isExpanded = expandedCategories.has(cat);
+            const isExpanded = isOpen(cat);
             if (songs.length === 0) return null;
             
             return (
-              <div key={cat} className="rounded-lg border border-neutral-200 dark:border-neutral-800 overflow-hidden">
+              <div key={cat} className="surface overflow-hidden">
                 <button
                   onClick={() => toggleCategory(cat)}
-                  className="w-full px-4 py-3 bg-gradient-to-r from-brand-cream/40 via-white/50 to-brand-gold/30 dark:from-brand-pine/30 dark:via-neutral-900/50 dark:to-brand-green/20 hover:from-brand-cream/60 hover:via-white/70 hover:to-brand-gold/50 dark:hover:from-brand-pine/40 dark:hover:via-neutral-900/70 dark:hover:to-brand-green/30 transition-colors flex items-center justify-between group"
+                  aria-expanded={isExpanded}
+                  className="focus-ring w-full px-5 py-4 hover:bg-neutral-50 dark:hover:bg-white/5 transition-colors flex items-center justify-between group"
                 >
                   <div className="flex items-center gap-3">
-                    <span className="text-sm font-semibold text-brand-maroon dark:text-brand-gold">{cat}</span>
-                    <span className="text-xs text-neutral-500 dark:text-neutral-400 font-medium">({songs.length})</span>
+                    <span className="text-base font-semibold text-neutral-900 dark:text-white">{cat}</span>
+                    <span className="meta-text">{songs.length} {songs.length === 1 ? 'song' : 'songs'}</span>
                   </div>
                   <svg
-                    className={`w-5 h-5 text-brand-maroon dark:text-brand-gold transition-transform ${isExpanded ? 'rotate-180' : ''}`}
+                    className={`w-5 h-5 text-neutral-400 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -368,27 +377,27 @@ export default function Playlist() {
                 </button>
                 
                 {isExpanded && (
-                  <div className="p-3 bg-neutral-50/50 dark:bg-neutral-900/30">
+                  <div className="px-3 pb-3 sm:px-4 sm:pb-4">
                     <div className="grid gap-2.5 sm:gap-3 sm:grid-cols-2 lg:grid-cols-3">
                       {songs.map(seq => {
                         const cleanDisplayName = seq.displayName.replace(/\s*2025\s*40fps\s*$/i, '').trim();
                         const isRequesting = requestingSeq === seq.name;
                         const isSuccess = successSeq === seq.name;
                         return (
-                          <div key={seq.name} className="p-3 sm:p-4 rounded-lg bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 flex flex-col shadow-sm">
-                            <h3 className="font-medium text-sm" aria-label={`Song ${cleanDisplayName}`}>{cleanDisplayName}</h3>
-                            <p className="mt-1 text-xs text-neutral-600 dark:text-neutral-400">
+                          <div key={seq.name} className="p-4 rounded-xl bg-neutral-50 dark:bg-white/5 border border-neutral-200 dark:border-white/10 flex flex-col">
+                            <h3 className="font-medium text-[15px] text-neutral-900 dark:text-white" aria-label={`Song ${cleanDisplayName}`}>{cleanDisplayName}</h3>
+                            <p className="meta-text mt-1">
                               {seq.duration ? `${Math.floor(seq.duration/60)}m ${seq.duration%60}s` : 'Duration unknown'}
                               {voting && voteCounts.has(seq.name) && <span className="ml-2 font-semibold text-brand-green dark:text-brand-gold">· {voteCounts.get(seq.name)} {voteCounts.get(seq.name) === 1 ? 'vote' : 'votes'}</span>}
                             </p>
-                            <div className="mt-2 flex gap-2">
+                            <div className="mt-3 flex gap-2">
                               <button 
                                 onClick={() => handleRequest(seq.name)} 
                                 disabled={isRequesting || !viewerControlEnabled}
-                                className={`focus-ring flex-1 text-[11px] sm:text-xs rounded border font-medium py-1.5 transition-all ${
+                                className={`focus-ring flex-1 text-sm rounded-full border font-semibold py-2 transition-all ${
                                   isSuccess 
                                     ? 'border-green-500 bg-green-500 text-white' 
-                                    : 'border-brand-green/40 bg-brand-green/10 dark:bg-brand-green/15 text-brand-green dark:text-brand-gold hover:bg-brand-green/20 dark:hover:bg-brand-green/25'
+                                    : 'border-brand-green/50 bg-brand-green/10 text-brand-green dark:text-[#4fd1a5] hover:bg-brand-green/20'
                                 } disabled:opacity-50 disabled:cursor-not-allowed`}
                               >
                                 {voting
@@ -407,7 +416,7 @@ export default function Playlist() {
           })}
           
           {totalFiltered === 0 && (
-            <p className="text-sm text-neutral-600 dark:text-neutral-400 text-center py-8">No songs match your search.</p>
+            <p className="meta-text text-center py-8">No songs match your search.</p>
           )}
         </div>
       )}

@@ -1,8 +1,9 @@
 "use client";
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import useSWR from 'swr';
 import { motion } from 'framer-motion';
 import { POSTS_KEY, postsFetcher } from '../lib/swr';
+import Lightbox from './Lightbox';
 
 interface PostItem {
   id: string;
@@ -12,20 +13,38 @@ interface PostItem {
   createdAt?: string;
 }
 
-function PostMedia({ post }: { post: PostItem }) {
+// "Today", "Yesterday", "3 days ago", then "Oct 29" (with the year only once
+// it's not this year). Seconds and times of day are noise in a feed.
+function friendlyDate(iso: string): string {
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return '';
+  const startOfDay = (x: Date) => new Date(x.getFullYear(), x.getMonth(), x.getDate()).getTime();
+  const days = Math.round((startOfDay(new Date()) - startOfDay(d)) / 86_400_000);
+  if (days <= 0) return 'Today';
+  if (days === 1) return 'Yesterday';
+  if (days < 7) return `${days} days ago`;
+  const sameYear = d.getFullYear() === new Date().getFullYear();
+  return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', ...(sameYear ? {} : { year: 'numeric' }) });
+}
+
+function PostMedia({ post, onOpen }: { post: PostItem; onOpen(): void }) {
   // Hook must run before any early return — React requires the same hook order
   // on every render of a component.
   const [orientation, setOrientation] = useState<'portrait' | 'landscape' | 'square' | null>(null);
 
+  // Photos sit in a letterboxed frame of a fixed maximum height, so a tall
+  // phone photo doesn't fill the whole screen. Tap to see it full size.
   if (post.type === 'image') {
     return (
-      <img
-        src={post.src}
-        alt={post.alt}
-        loading="lazy"
-        decoding="async"
-        className="rounded-md mx-auto w-auto max-w-full h-auto max-h-[80vh] object-contain select-none"
-      />
+      <button onClick={onOpen} aria-label="View photo full screen" className="focus-ring block w-full rounded-xl bg-black/40 overflow-hidden cursor-zoom-in">
+        <img
+          src={post.src}
+          alt={post.alt}
+          loading="lazy"
+          decoding="async"
+          className="mx-auto w-auto max-w-full h-auto max-h-[60vh] object-contain select-none"
+        />
+      </button>
     );
   }
 
@@ -33,84 +52,87 @@ function PostMedia({ post }: { post: PostItem }) {
     'relative w-full mx-auto transition-all';
   const wrapperClass =
     orientation === 'portrait'
-      ? 'max-w-[430px]'
+      ? 'max-w-[360px]'
       : orientation === 'square'
-        ? 'max-w-[560px]'
+        ? 'max-w-[480px]'
         : 'max-w-[760px]';
 
   return (
-    <div className={`${wrapperBase} ${wrapperClass}`}>
-      <video
-        key={post.src}
-        className="rounded-md w-full h-auto max-h-[75vh] object-contain bg-black shadow-inner"
-        src={post.src}
-        controls
-        playsInline
-        preload="metadata"
-        controlsList="nodownload"
-        onLoadedMetadata={(e) => {
-          const v = e.currentTarget;
-            const w = v.videoWidth;
-            const h = v.videoHeight;
-          if (w && h) {
-            if (w === h) setOrientation('square');
-            else if (w > h) setOrientation('landscape');
-            else setOrientation('portrait');
-          }
-        }}
-      >
-        <p className="text-xs p-2">
-          Your browser can’t play this video.
-        </p>
-      </video>
+    <div className="rounded-xl bg-black/40">
+      <div className={`${wrapperBase} ${wrapperClass}`}>
+        <video
+          key={post.src}
+          className="rounded-xl w-full h-auto max-h-[60vh] object-contain bg-black"
+          src={post.src}
+          controls
+          playsInline
+          preload="metadata"
+          controlsList="nodownload"
+          onLoadedMetadata={(e) => {
+            const v = e.currentTarget;
+              const w = v.videoWidth;
+              const h = v.videoHeight;
+            if (w && h) {
+              if (w === h) setOrientation('square');
+              else if (w > h) setOrientation('landscape');
+              else setOrientation('portrait');
+            }
+          }}
+        >
+          <p className="text-xs p-2">
+            Your browser can’t play this video.
+          </p>
+        </video>
+      </div>
     </div>
   );
 }
 
 export default function PostsFeed() {
   const { data: posts, error, isLoading } = useSWR<PostItem[]>(POSTS_KEY, postsFetcher);
+  const [viewing, setViewing] = useState<number | null>(null);
+  const photos = useMemo(() => (posts ?? []).filter((p) => p.type === 'image'), [posts]);
 
   if (error && !posts) {
     return (
-      <div role="alert" className="text-sm text-red-600">
-        Unable to load posts
+      <div role="alert" className="meta-text">
+        Updates couldn’t load. Please try again in a moment.
       </div>
     );
   }
   if (isLoading && !posts) {
-    return <p className="text-sm text-neutral-600 dark:text-neutral-400">Loading posts…</p>;
+    return <p className="meta-text">Loading updates…</p>;
   }
   if (!posts?.length) {
     return (
-      <p className="text-sm text-neutral-600 dark:text-neutral-400">
-        No posts yet. Upload media in the Admin tab.
+      <p className="meta-text">
+        No updates yet. Check back soon!
       </p>
     );
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       {posts.map((p) => (
-        <motion.div
+        <motion.article
           key={p.id}
           layout
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
-          className="rounded-lg border border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-900/60 p-4 flex flex-col gap-3"
+          className="surface p-4 sm:p-5 flex flex-col gap-3"
         >
-          <PostMedia post={p} />
-          <div className="flex flex-wrap items-start gap-x-4 gap-y-1 text-xs text-neutral-600 dark:text-neutral-400">
-            <span className="whitespace-pre-wrap break-words flex-1 min-w-[60%]">
-              {p.alt || 'Untitled'}
-            </span>
+          <div className="space-y-1 px-0.5">
             {p.createdAt && (
-              <span className="text-[10px] text-neutral-400 tabular-nums">
-                {new Date(p.createdAt).toLocaleString()}
-              </span>
+              <time dateTime={p.createdAt} title={new Date(p.createdAt).toLocaleString()} className="meta-text block">
+                {friendlyDate(p.createdAt)}
+              </time>
             )}
+            {p.alt && <p className="text-[15px] sm:text-base leading-relaxed text-neutral-900 dark:text-white whitespace-pre-wrap break-words">{p.alt}</p>}
           </div>
-        </motion.div>
+          <PostMedia post={p} onOpen={() => setViewing(photos.indexOf(p))} />
+        </motion.article>
       ))}
+      <Lightbox images={photos} index={viewing} onIndex={setViewing} onClose={() => setViewing(null)} />
     </div>
   );
 }

@@ -57,13 +57,13 @@ const props = ['Mega tree', 'Light tunnel', 'Spheres', 'Snowflakes', 'Window mat
 function SectionHeading({ eyebrow, title }: { eyebrow: string; title: string }) {
   return (
     <div className="mb-5">
-      <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-brand-red dark:text-brand-gold">{eyebrow}</p>
-      <h3 className="mt-1 font-display text-xl sm:text-2xl font-extrabold tracking-tight text-neutral-900 dark:text-neutral-100">{title}</h3>
+      <p className="eyebrow">{eyebrow}</p>
+      <h3 className="section-title mt-1">{title}</h3>
     </div>
   );
 }
 
-const card = 'rounded-2xl border border-neutral-200/80 dark:border-neutral-800 bg-white/80 dark:bg-neutral-900/70 backdrop-blur';
+const card = 'surface';
 
 // Diagram 1: the path from the show computer to the lights.
 function SignalFlow() {
@@ -78,11 +78,11 @@ function SignalFlow() {
       <ol className="flex flex-col sm:flex-row sm:items-stretch">
         {nodes.map((n, i) => (
           <li key={n.title} className="flex flex-col sm:flex-row items-center sm:flex-1 min-w-0">
-            <div className="w-full h-full flex sm:block items-center gap-3 rounded-xl bg-neutral-50 dark:bg-neutral-800/60 border border-neutral-200 dark:border-neutral-700/70 px-4 sm:px-2 py-2.5 sm:py-3 sm:text-center">
+            <div className="w-full h-full flex sm:block items-center gap-3 rounded-xl bg-neutral-50 dark:bg-white/5 border border-neutral-200 dark:border-white/10 px-4 sm:px-2 py-2.5 sm:py-3 sm:text-center">
               <div className="text-2xl" aria-hidden="true">{n.icon}</div>
               <div>
                 <div className="sm:mt-1 text-sm font-semibold text-neutral-900 dark:text-neutral-100">{n.title}</div>
-                <div className="text-xs text-neutral-500 dark:text-neutral-400">{n.note}</div>
+                <div className="text-[13px] text-neutral-500 dark:text-neutral-400">{n.note}</div>
               </div>
             </div>
             {i < nodes.length - 1 && (
@@ -93,7 +93,7 @@ function SignalFlow() {
           </li>
         ))}
       </ol>
-      <figcaption className="mt-4 text-center text-xs text-neutral-500 dark:text-neutral-400">
+      <figcaption className="meta-text mt-4 text-center">
         The music goes out to your car radio while the colors go out to the lights, both perfectly in time.
       </figcaption>
     </figure>
@@ -120,7 +120,7 @@ function PixelChain() {
           ))}
         </div>
       </div>
-      <figcaption className="mt-5 text-center text-xs text-neutral-500 dark:text-neutral-400">
+      <figcaption className="meta-text mt-5 text-center">
         The controller sends a list of colors down the wire. Each light keeps the first color for itself and passes the rest along, dozens of times a second.
       </figcaption>
       {/* Opacity/transform only, so it stays on the compositor and doesn't
@@ -142,7 +142,7 @@ export default function ShowInfo() {
     <div className="space-y-12 sm:space-y-16">
       {/* Intro */}
       <section className="relative overflow-hidden rounded-3xl border border-brand-gold/50 bg-gradient-to-br from-brand-cream/80 via-white/80 to-brand-gold/25 dark:from-brand-pine/60 dark:via-neutral-900/80 dark:to-brand-maroon/30 p-6 sm:p-10">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-brand-red dark:text-brand-gold">About Jackson Lights</p>
+        <p className="eyebrow">About Jackson Lights</p>
         <h3 className="mt-2 font-display text-2xl sm:text-4xl font-extrabold tracking-tight text-neutral-900 dark:text-neutral-50 max-w-2xl">
           A family light show for Beacon
         </h3>
@@ -197,10 +197,10 @@ export default function ShowInfo() {
           ))}
         </div>
         <div className="mt-6">
-          <p className="text-xs font-medium text-neutral-500 dark:text-neutral-400 mb-2">Look for these around the house:</p>
+          <p className="meta-text mb-2">Look for these around the house:</p>
           <ul className="flex flex-wrap gap-2">
             {props.map((p) => (
-              <li key={p} className="rounded-full border border-neutral-200 dark:border-neutral-700 bg-white/70 dark:bg-neutral-900/60 px-3 py-1 text-xs text-neutral-700 dark:text-neutral-300">{p}</li>
+              <li key={p} className="rounded-full border border-neutral-200 dark:border-white/10 bg-white/70 dark:bg-white/5 px-3 py-1 text-sm text-neutral-700 dark:text-neutral-300">{p}</li>
             ))}
           </ul>
         </div>

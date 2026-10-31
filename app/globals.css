@@ -13,46 +13,39 @@
 ::-webkit-scrollbar-thumb { background: #ccc; border-radius: 20px; }
 .dark ::-webkit-scrollbar-thumb { background: #444; }
 
-body { font-feature-settings: 'ss01' on; }
-
-.focus-ring { @apply focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-gold focus-visible:ring-offset-2; }
-
-/* Twinkling dot backdrop.
-   Two changes from the original, both for scroll smoothness:
-   1. `fixed` instead of `absolute inset-0` inside <main>. The old layer was as
-      tall as the entire document, so the browser kept a full-page-sized
-      texture around and repainted it.
-   2. The animation moves the layer with `transform` rather than
-      `background-position`. background-position repaints the layer every
-      frame; transform is handled entirely by the compositor. */
-.twinkle-layer {
-  position: fixed;
-  /* Overscan by one tile so the translate never exposes an edge. */
-  inset: -24px;
-  z-index: 0;
-  pointer-events: none;
-  background-image: radial-gradient(circle at 1px 1px, rgba(255, 255, 255, 0.35) 1px, transparent 0);
-  background-size: 24px 24px;
-  opacity: 0.15;
+/* A deep, slightly pine-tinted night sky so the lights in photos pop. Snowfall
+   is the only animated background layer; the old twinkling dot pattern was
+   removed because the two competed with each other. */
+body {
+  font-feature-settings: 'ss01' on;
+  @apply bg-[#faf7f2] text-neutral-900 dark:bg-[#0a0f0d] dark:text-neutral-100;
 }
 
-.dark .twinkle-layer { opacity: 0.3; }
+.focus-ring { @apply focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-gold focus-visible:ring-offset-2 focus-visible:ring-offset-transparent; }
 
-@media (prefers-reduced-motion: no-preference) {
-  .dark .twinkle-layer {
-    animation: twinkleShift 40s linear infinite;
-    will-change: transform;
-  }
-}
-
-@keyframes twinkleShift {
-  from { transform: translate3d(0, 0, 0); }
-  to { transform: translate3d(24px, 24px, 0); }
+/* Shared building blocks, so every section uses the same card, label, heading,
+   field and button styles. Use these rather than one-off class strings. */
+@layer components {
+  /* The standard card. No backdrop-blur: blurring many layers over the
+     animated snow is expensive to repaint on phones. */
+  .surface { @apply rounded-2xl border border-neutral-200 bg-white/90 dark:border-white/10 dark:bg-[#121916]/90; }
+  /* Small uppercase label above a heading. */
+  .eyebrow { @apply text-[11px] font-semibold uppercase tracking-[0.18em] text-brand-red dark:text-brand-gold; }
+  .section-title { @apply font-display text-xl sm:text-2xl font-extrabold tracking-tight text-neutral-900 dark:text-white; }
+  .body-text { @apply text-sm sm:text-[15px] leading-relaxed text-neutral-700 dark:text-neutral-300; }
+  .meta-text { @apply text-sm text-neutral-500 dark:text-neutral-400; }
+  .field { @apply w-full rounded-xl border border-neutral-300 bg-white px-4 py-2.5 text-sm text-neutral-900 placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-brand-green/70 dark:border-white/15 dark:bg-white/5 dark:text-neutral-100 dark:placeholder:text-neutral-500; }
+  .btn { @apply focus-ring inline-flex items-center justify-center gap-2 rounded-full px-5 py-2.5 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-50; }
+  .btn-primary { @apply btn bg-brand-green text-white hover:bg-[#00a07b]; }
+  .btn-secondary { @apply btn border border-neutral-300 text-neutral-800 hover:bg-neutral-100 dark:border-white/20 dark:text-neutral-100 dark:hover:bg-white/10; }
+  /* Small toggle/filter pill. Add .chip-active for the selected one. */
+  .chip { @apply focus-ring rounded-full border border-neutral-300 px-3.5 py-1.5 text-sm font-medium text-neutral-600 transition-colors hover:bg-neutral-100 dark:border-white/15 dark:text-neutral-300 dark:hover:bg-white/10; }
+  .chip-active { @apply border-brand-green bg-brand-green text-white hover:bg-brand-green dark:border-brand-green dark:text-white dark:hover:bg-brand-green; }
 }
 
 /* Tab panel transitions (React <ViewTransition> in TabbedSections).
    Only the panels should cross-fade, not the whole page, so the root snapshot
-   is kept static; the twinkle backdrop and snowfall sit in it. Short, and
+   is kept static; the snowfall sits in it. Short, and
    skipped entirely for people who ask for reduced motion. */
 ::view-transition-old(root) { display: none; }
 ::view-transition-new(root) { animation: none; }

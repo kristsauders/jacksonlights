@@ -61,62 +61,57 @@ export default function SongRequests(){
     });
   }
 
+  // Sorting and filtering only help once there's a real list to look through.
+  const showControls = ideas.length > 4;
+
   return (
-    <div className="space-y-8">
-      <div className="text-center space-y-4">
-        <h3 className="font-display text-2xl md:text-3xl font-extrabold tracking-tight bg-gradient-to-r from-brand-red via-brand-gold to-brand-green bg-clip-text text-transparent">Suggest Songs For Next Year</h3>
-        <p className="text-sm md:text-base max-w-2xl mx-auto text-neutral-700 dark:text-neutral-300">Submit ideas for songs you&apos;d love to see added next season.</p>
+    <section className="surface p-5 sm:p-6 space-y-5">
+      <div>
+        <p className="eyebrow">Song ideas</p>
+        <h3 className="section-title mt-1">Suggest a song for next year</h3>
+        <p className="body-text mt-2">Holiday favorites, high-energy hits and songs everyone knows work best. Family-friendly lyrics, please!</p>
       </div>
       <form action={addAction} className="flex flex-col sm:flex-row gap-3">
-        <input name="title" defaultValue={addState.values?.title ?? ''} maxLength={120} placeholder="Suggest a song (title - artist)" className="flex-1 rounded-lg bg-white/80 dark:bg-neutral-900/70 ring-1 ring-neutral-300 dark:ring-neutral-700 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-green text-neutral-800 dark:text-neutral-200" />
-        <SubmitButton pendingLabel="Adding…" className="px-6 py-3 rounded-lg text-sm font-semibold bg-brand-green text-white shadow hover:bg-brand-pine transition disabled:opacity-50">Add Idea</SubmitButton>
+        <input name="title" defaultValue={addState.values?.title ?? ''} maxLength={120} placeholder="Song title – artist" aria-label="Song title and artist" className="field flex-1" />
+        <SubmitButton pendingLabel="Adding…" className="btn-primary">Add idea</SubmitButton>
       </form>
       {(addState.status==='error' || addState.status==='info' || voteNotice) && (
-        <p role={addState.status==='info' && !voteNotice ? 'status' : 'alert'} className="text-xs text-center -mt-4">
+        <p role={addState.status==='info' && !voteNotice ? 'status' : 'alert'} className="text-sm -mt-2">
           {addState.status==='error' && <span className="text-red-600 dark:text-red-400">{addState.message}</span>}
           {addState.status==='info' && <span className="text-neutral-600 dark:text-neutral-400">{addState.message}</span>}
           {voteNotice && <span className="text-red-600 dark:text-red-400">{voteNotice}</span>}
         </p>
       )}
-      <div className="flex flex-col lg:flex-row gap-6">
-        <div className="flex-1 space-y-4">
-          <div className="flex flex-wrap gap-3 items-center justify-between">
-            <div className="flex gap-2 items-center text-xs">
-              <button onClick={()=>setSort('top')} className={`px-3 py-1.5 rounded-full border text-[11px] font-medium ${sort==='top'? 'bg-brand-green text-white border-brand-green':'border-neutral-300 dark:border-neutral-700 text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-800'}`}>Top</button>
-              <button onClick={()=>setSort('new')} className={`px-3 py-1.5 rounded-full border text-[11px] font-medium ${sort==='new'? 'bg-brand-green text-white border-brand-green':'border-neutral-300 dark:border-neutral-700 text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-800'}`}>Newest</button>
-            </div>
-            <input value={filter} onChange={e=>setFilter(e.target.value)} placeholder="Filter" className="rounded-full bg-white/70 dark:bg-neutral-900/60 ring-1 ring-neutral-300 dark:ring-neutral-700 px-4 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-brand-green" />
+      {showControls && (
+        <div className="flex flex-wrap gap-3 items-center justify-between">
+          <div className="flex gap-2 items-center">
+            <button onClick={()=>setSort('top')} aria-pressed={sort==='top'} className={`chip ${sort==='top' ? 'chip-active' : ''}`}>Top</button>
+            <button onClick={()=>setSort('new')} aria-pressed={sort==='new'} className={`chip ${sort==='new' ? 'chip-active' : ''}`}>Newest</button>
           </div>
-          <div className="grid gap-3">
-            <AnimatePresence initial={false}>
-              {filtered.map((idea,i)=>(
-                <motion.div layout key={idea.id} initial={{opacity:0,y:6}} animate={{opacity:1,y:0}} exit={{opacity:0,y:-6}} transition={{type:'tween',duration:0.25}} className="group flex items-center gap-4 rounded-lg bg-white/80 dark:bg-neutral-900/60 ring-1 ring-neutral-200 dark:ring-neutral-800 px-4 py-3">
-                  <button onClick={()=>vote(idea.id)} className="flex flex-col items-center justify-center w-12 h-12 rounded-md bg-gradient-to-b from-brand-green/80 to-brand-pine/80 text-white font-semibold text-sm shadow hover:from-brand-green hover:to-brand-pine transition-colors">
-                    <span>{idea.votes}</span>
-                    <span className="text-[10px] uppercase tracking-wide">votes</span>
-                  </button>
-                  <div className="flex-1">
-                    <p className="text-sm font-medium text-neutral-800 dark:text-neutral-200">{idea.title}</p>
-                    <p className="text-[11px] text-neutral-500 dark:text-neutral-400 mt-0.5">Suggested {new Date(idea.createdAt).toLocaleDateString()}</p>
-                  </div>
-                </motion.div>
-              ))}
-              {filtered.length===0 && !isLoading && (
-                <motion.div initial={{opacity:0}} animate={{opacity:1}} className="text-center text-xs text-neutral-500 py-10">No ideas yet. Be first!</motion.div>
-              )}
-            </AnimatePresence>
-          </div>
+          <input type="search" value={filter} onChange={e=>setFilter(e.target.value)} placeholder="Filter ideas" aria-label="Filter ideas" className="field !w-auto !py-1.5 !rounded-full" />
         </div>
-        <aside className="w-full lg:w-64 flex-shrink-0 space-y-4">
-          <div className="rounded-xl bg-gradient-to-br from-brand-cream/70 via-white/60 to-brand-gold/40 dark:from-brand-pine/60 dark:via-neutral-900/60 dark:to-brand-green/30 p-5 ring-1 ring-brand-maroon/15 dark:ring-brand-pine/30">
-            <h4 className="text-sm font-semibold uppercase tracking-wide text-brand-maroon dark:text-brand-gold mb-2">Guidelines</h4>
-            <ul className="text-[11px] space-y-1 text-neutral-600 dark:text-neutral-400 list-disc pl-4">
-              <li>Holiday, high-energy, or well-known tracks work best</li>
-              <li>Family friendly lyrics</li>
-            </ul>
-          </div>
-        </aside>
-      </div>
-    </div>
+      )}
+      {(filtered.length > 0 || !isLoading) && (
+        <ul className="divide-y divide-neutral-200 dark:divide-white/10 border-t border-neutral-200 dark:border-white/10">
+          <AnimatePresence initial={false}>
+            {filtered.map((idea)=>(
+              <motion.li layout key={idea.id} initial={{opacity:0,y:6}} animate={{opacity:1,y:0}} exit={{opacity:0,y:-6}} transition={{type:'tween',duration:0.25}} className="flex items-center gap-4 py-3">
+                <button onClick={()=>vote(idea.id)} aria-label={`Vote for ${idea.title}`} className="focus-ring flex flex-col items-center justify-center w-14 h-14 shrink-0 rounded-xl border border-brand-green/50 bg-brand-green/10 text-brand-green dark:text-[#4fd1a5] font-semibold text-base hover:bg-brand-green/20 transition-colors">
+                  <span>{idea.votes}</span>
+                  <span className="text-[10px] uppercase tracking-wide">{idea.votes === 1 ? 'vote' : 'votes'}</span>
+                </button>
+                <div className="flex-1 min-w-0">
+                  <p className="text-[15px] font-medium text-neutral-900 dark:text-white">{idea.title}</p>
+                  <p className="meta-text mt-0.5">Suggested {new Date(idea.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}</p>
+                </div>
+              </motion.li>
+            ))}
+          </AnimatePresence>
+          {filtered.length===0 && (
+            <li className="meta-text pt-4">{filter ? 'No ideas match that filter.' : 'No ideas yet. Be the first!'}</li>
+          )}
+        </ul>
+      )}
+    </section>
   );
 }

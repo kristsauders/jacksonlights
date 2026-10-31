@@ -16,22 +16,21 @@ function LoadingSkeleton() {
 
 export default function HomePage() {
   return (
-    <main className="relative overflow-x-hidden">
-      <div className="twinkle-layer" aria-hidden="true" />
-      <div className="relative z-10 max-w-7xl mx-auto px-3 sm:px-4 pt-5 sm:pt-7 pb-6 sm:pb-8 space-y-3 sm:space-y-14">
+    // overflow-x-clip rather than -hidden: hidden turns <main> into a scroll
+    // container, which stops the tab bar from sticking to the viewport.
+    <main className="relative overflow-x-clip">
+      <div className="relative z-10 max-w-6xl mx-auto px-3 sm:px-4 pt-3 sm:pt-6 pb-6 sm:pb-8 space-y-4 sm:space-y-6">
         <HeroHeader />
 
         <PreseasonBanner />
 
-        <section aria-labelledby="status-heading" className="space-y-7 sm:space-y-9 -mt-4 sm:-mt-2">
-          <h2 id="status-heading" className="sr-only">Current Show Status</h2>
-          <Suspense fallback={<LoadingSkeleton />}>
-            <ShowStatus />
-          </Suspense>
+        <ShowStatus />
+
+        <div className="pt-4 sm:pt-6">
           <Suspense fallback={<LoadingSkeleton />}>
             <TabbedSections />
           </Suspense>
-        </section>
+        </div>
 
         <footer className="pt-12 pb-8 text-center text-xs text-neutral-500 dark:text-neutral-400">
           <p>© {new Date().getFullYear()} Jackson Lights. Built with love & LEDs.</p>

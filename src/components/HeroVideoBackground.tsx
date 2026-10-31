@@ -27,8 +27,8 @@ const LOOP_END_SECONDS = LOOP_START_SECONDS + LOOP_DURATION_SECONDS;
  * Two things keep that off the critical path:
  *   1. Mounting is deferred to idle time, after the fast hero photo has
  *      already painted — LCP is unaffected.
- *   2. It's skipped entirely on prefers-reduced-motion or a save-data
- *      connection, leaving just the static photo.
+ *   2. It's skipped entirely on phones, prefers-reduced-motion or a
+ *      save-data connection, leaving just the static photo.
  *
  * If you'd rather have this be a tiny self-hosted mp4 (better performance,
  * no third-party request at all), export an 8-15s muted clip from the show
@@ -41,7 +41,10 @@ export default function HeroVideoBackground() {
   useEffect(() => {
     const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     const saveData = (navigator as any).connection?.saveData;
-    if (reduceMotion || saveData) return;
+    // Phones often refuse to autoplay the embed and show YouTube's play button
+    // and spinner over the header instead, so they just get the photo.
+    const smallScreen = window.matchMedia('(max-width: 639px)').matches;
+    if (reduceMotion || saveData || smallScreen) return;
 
     const win = window as any;
     const idleId = win.requestIdleCallback

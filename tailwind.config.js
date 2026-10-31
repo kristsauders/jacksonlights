@@ -29,9 +29,6 @@ export default {
           cream: '#F5E9D3'
         }
       },
-      backgroundImage: {
-        'twinkle': 'radial-gradient(circle at 1px 1px, rgba(255,255,255,0.35) 1px, transparent 0)',
-      },
       animation: {
         fadeIn: 'fadeIn 1s ease both',
         pulseSlow: 'pulseSlow 4s ease-in-out infinite'
