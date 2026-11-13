@@ -77,7 +77,9 @@ const CATEGORY_MAP: Record<string, 'Christmas' | 'Pop' | 'Electronic' | 'Kids' |
   "Ruelle - Madness": 'Pop',
   "Tai Verdes - A-O-K": 'Pop',
   "Tommee Profitt - Mad World": 'Pop',
-  
+  "Ozzy Osbourne - Crazy Train": 'Pop',
+  "Dolly Parton - 9 to 5": 'Pop',
+
   // Electronic
   "Majestic x Boney M - Rasputin": 'Electronic',
   "Tiesto - The Business": 'Electronic',
@@ -159,6 +161,15 @@ function VoteStandings({ standings }: { standings: VoteRow[] }) {
 // category, to invite people to watch it all.
 const isFullShow = (s: { displayName?: string }) => /full show/i.test(s.displayName ?? '');
 
+// Preview Night (Sat Nov 14) opens with the full show, and then guests vote
+// on songs. They've just watched it, so leave it off the list through that
+// weekend and bring it back on Monday, Nov 16 (show time, America/New_York).
+const FULL_SHOW_HIDDEN_UNTIL = '2026-11-16';
+function fullShowHidden(): boolean {
+  const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/New_York' }).format(new Date());
+  return today >= '2026-11-14' && today < FULL_SHOW_HIDDEN_UNTIL;
+}
+
 function FeaturedShow({ seq, voting, enabled, votes, requesting, success, onPick }: {
   seq: any; voting: boolean; enabled: boolean; votes?: number;
   requesting: boolean; success: boolean; onPick: () => void;
@@ -235,7 +246,9 @@ export default function Playlist() {
     return categories;
   }, [sequences, query]);
 
-  const fullShow = useMemo(() => sequences.find(isFullShow), [sequences]);
+  // Evaluated with the data, which only loads in the browser, so the date
+  // check never differs between the server render and hydration.
+  const fullShow = useMemo(() => (fullShowHidden() ? undefined : sequences.find(isFullShow)), [sequences]);
 
   const totalFiltered = Object.values(grouped).reduce((sum, arr) => sum + arr.length, 0);
 

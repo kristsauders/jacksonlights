@@ -7,7 +7,11 @@ import { rateLimit } from '../../../src/lib/rateLimit';
 export const dynamic = 'force-dynamic';
 
 export async function POST(req: NextRequest) {
-  const limited = rateLimit(req, 'sequence-vote', 30, 5 * 60_000);
+  // Generous on purpose: a crowd on one Wi-Fi network (a party, or phones
+  // behind a carrier's shared address) all count as one IP here. Remote
+  // Falcon can't tell visitors apart either, since every vote reaches it from
+  // this server, so this only stops a single client flooding the endpoint.
+  const limited = rateLimit(req, 'sequence-vote', 300, 5 * 60_000);
   if (limited) return limited;
 
   try {

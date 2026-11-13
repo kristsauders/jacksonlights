@@ -22,10 +22,10 @@ const PostsFeed = dynamic(() => import('./PostsFeed'), { loading: panelLoading }
 const SongRequests = dynamic(() => import('./SongRequests'), { loading: panelLoading });
 const FeedbackForm = dynamic(() => import('./FeedbackForm'), { loading: panelLoading });
 
-// The tab shown when the site loads. Before the season it's the behind-the-
-// scenes posts people follow along with; switch back to 'songs' once the show
-// is running, since picking the next song is then the main thing people do.
-const DEFAULT_TAB = 'photos';
+// The tab shown when the site loads. While the show is running, picking the
+// next song is the main thing people do. Before the season it was 'photos', for
+// the behind-the-scenes posts people followed along with.
+const DEFAULT_TAB = 'songs';
 
 // Tab ids double as URL hashes (#songs, #photos, ...), so any link on the page
 // pointing at one switches to that tab.
