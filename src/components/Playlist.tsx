@@ -133,6 +133,34 @@ function rankVotes(raw: unknown): VoteRow[] {
     b.votes - a.votes || String(a.lastVoteTime ?? '').localeCompare(String(b.lastVoteTime ?? '')));
 }
 
+// A vote the visitor just cast, shown on the page until Remote Falcon's own
+// tally catches up. The tally reaches the page through a few seconds of caching
+// (this server, Front Door, the browser), so without this a vote could take up
+// to ~20 seconds to appear and looked like it hadn't counted. Tied to the song
+// playing when it was cast: once that changes the round is over and Remote
+// Falcon has reset the votes, so the local copy is dropped too.
+interface OwnVote { expected: number; round: unknown; until: number }
+const OWN_VOTE_MS = 60_000;
+
+function withOwnVotes(rows: VoteRow[], own: Record<string, OwnVote>, round: unknown, sequences: any[]): VoteRow[] {
+  const now = Date.now();
+  const byName = new Map(rows.map(r => [r.name, r]));
+  let changed = false;
+  for (const [name, v] of Object.entries(own)) {
+    if (v.until < now || v.round !== round) continue;
+    const row = byName.get(name);
+    if ((row?.votes ?? 0) >= v.expected) continue;
+    changed = true;
+    byName.set(name, {
+      name,
+      displayName: row?.displayName ?? sequences.find(s => s.name === name)?.displayName,
+      votes: v.expected,
+      lastVoteTime: row?.lastVoteTime ?? new Date(now).toISOString(),
+    });
+  }
+  return changed ? rankVotes([...byName.values()]) : rows;
+}
+
 function VoteStandings({ standings }: { standings: VoteRow[] }) {
   const top = standings.slice(0, 10);
   return (
@@ -221,7 +249,13 @@ export default function Playlist() {
   // Remote Falcon runs the show in one of two modes: JUKEBOX (a request plays
   // next, in order) or VOTING (everyone votes and the leader plays next).
   const voting = data?.preferences?.viewerControlMode === 'VOTING';
-  const standings = useMemo(() => rankVotes(data?.votes), [data?.votes]);
+  const playingNow = data?.playingNow;
+  const [ownVotes, setOwnVotes] = useState<Record<string, OwnVote>>({});
+  const serverStandings = useMemo(() => rankVotes(data?.votes), [data?.votes]);
+  const standings = useMemo(
+    () => withOwnVotes(serverStandings, ownVotes, playingNow, sequences),
+    [serverStandings, ownVotes, playingNow, sequences]
+  );
   const voteCounts = useMemo(() => new Map(standings.map(v => [v.name, v.votes])), [standings]);
   
   // Group by category and filter by search
@@ -276,8 +310,14 @@ export default function Playlist() {
       // Remote Falcon API returns 200 when request is accepted
       setSuccessSeq(sequence);
       setTimeout(() => setSuccessSeq(null), 2000);
-      // Show the new tally right away instead of waiting for the next poll.
-      if (voting) mutate('/api/status');
+      if (voting) {
+        setOwnVotes(prev => ({
+          ...prev,
+          [sequence]: { expected: (voteCounts.get(sequence) ?? 0) + 1, round: playingNow, until: Date.now() + OWN_VOTE_MS },
+        }));
+        // Also fetch the real tally, which includes everyone else's votes.
+        mutate('/api/status');
+      }
     } catch (e: any) {
       alert(e.message || (voting ? 'Unable to cast your vote right now.' : 'Unable to request the song right now.'));
     } finally {

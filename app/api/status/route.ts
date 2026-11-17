@@ -6,8 +6,10 @@ export const dynamic = 'force-dynamic';
 // Every visitor's browser polls this endpoint on a timer. Without a shared
 // cache each poll became a separate upstream call to Remote Falcon, so origin
 // load (and page latency) scaled linearly with the number of people parked on
-// the site. One upstream call per CACHE_TTL_MS now serves everybody.
-const CACHE_TTL_MS = 5_000;
+// the site. One upstream call per CACHE_TTL_MS now serves everybody. Kept short
+// because in voting mode this is a live scoreboard: together with Front Door's
+// copy (below) a new vote shows up for everyone within about 6 seconds.
+const CACHE_TTL_MS = 2_000;
 
 let cached: { at: number; body: unknown } | null = null;
 let inFlight: Promise<unknown> | null = null;
@@ -78,8 +80,10 @@ export async function GET() {
     return NextResponse.json(body, {
       status: 200,
       headers: {
-        // Let Front Door absorb the polling too.
-        'Cache-Control': 'public, max-age=3, s-maxage=5, stale-while-revalidate=10',
+        // Let Front Door absorb the polling too, briefly. No browser caching,
+        // so the refresh right after a vote isn't answered from the phone's
+        // own copy of the pre-vote tally.
+        'Cache-Control': 'public, max-age=0, s-maxage=2, stale-while-revalidate=2',
       },
     });
   } catch (e) {
