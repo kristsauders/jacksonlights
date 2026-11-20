@@ -4,7 +4,9 @@ import { useState, useMemo } from 'react';
 import { fetcher, statusSwrConfig } from '../lib/swr';
 
 // Category mapping: add new sequences here as they're created
-const CATEGORY_MAP: Record<string, 'Christmas' | 'Pop' | 'Electronic' | 'Kids' | 'Other'> = {
+type Category = 'Christmas' | 'Pop' | 'Electronic' | 'Kids' | 'Jackie' | 'Other';
+
+const CATEGORY_MAP: Record<string, Category> = {
   // Christmas
   "Alxxa - It's the Most Wonderful Time of the Year": 'Christmas',
   "Alxxa - It's the Most Wonderful Time of the Year PPD 2025 40fps": 'Christmas',
@@ -111,9 +113,15 @@ const CATEGORY_MAP: Record<string, 'Christmas' | 'Pop' | 'Electronic' | 'Kids' |
 
 };
 
-const CATEGORY_ORDER = ['Christmas', 'Pop', 'Electronic', 'Kids', 'Other'] as const;
+const CATEGORY_ORDER: readonly Category[] = ['Christmas', 'Pop', 'Electronic', 'Kids', 'Jackie', 'Other'];
 
-function categorize(displayName: string): 'Christmas' | 'Pop' | 'Electronic' | 'Kids' | 'Other' {
+// Jackie, the house's talking face, has her own short speeches on the
+// playlist ("Jackie Lights - House Jokes" and so on). They get their own
+// section, listed by title alone, rather than a line in the category map each.
+const JACKIE_PREFIX = /^Jackie Lights - /i;
+
+function categorize(displayName: string): Category {
+  if (JACKIE_PREFIX.test(displayName)) return 'Jackie';
   // Try exact match first
   if (CATEGORY_MAP[displayName]) {
     return CATEGORY_MAP[displayName];
@@ -241,9 +249,9 @@ export default function Playlist() {
   const { data, error, isLoading } = useSWR('/api/status', fetcher, statusSwrConfig);
   const { mutate } = useSWRConfig();
   const [query, setQuery] = useState('');
-  // null until the visitor opens or closes a category themselves; until then
-  // the first category with songs starts open so the list isn't just headers.
-  const [expandedCategories, setExpandedCategories] = useState<Set<string> | null>(null);
+  // Every category starts closed, so the whole list of sections is visible at
+  // a glance; the visitor opens the ones they want.
+  const [expandedCategories, setExpandedCategories] = useState<ReadonlySet<string>>(() => new Set());
   const [requestingSeq, setRequestingSeq] = useState<string | null>(null);
   const [successSeq, setSuccessSeq] = useState<string | null>(null);
 
@@ -269,13 +277,7 @@ export default function Playlist() {
   
   // Group by category and filter by search
   const grouped = useMemo(() => {
-    const categories: Record<string, any[]> = {
-      'Christmas': [],
-      'Pop': [],
-      'Electronic': [],
-      'Kids': [],
-      'Other': []
-    };
+    const categories = Object.fromEntries(CATEGORY_ORDER.map(cat => [cat, [] as any[]])) as Record<Category, any[]>;
     
     sequences.forEach(s => {
       if (isFullShow(s)) return; // shown on its own card
@@ -334,14 +336,12 @@ export default function Playlist() {
     }
   }
 
-  const firstCategory = CATEGORY_ORDER.find(cat => grouped[cat].length > 0);
   // While searching, every category with a match is open so results show up.
-  const isOpen = (cat: string) =>
-    query ? true : expandedCategories ? expandedCategories.has(cat) : cat === firstCategory;
+  const isOpen = (cat: string) => (query ? true : expandedCategories.has(cat));
 
   function toggleCategory(cat: string) {
     setExpandedCategories(prev => {
-      const next = new Set(prev ?? (firstCategory ? [firstCategory] : []));
+      const next = new Set(prev);
       if (next.has(cat)) {
         next.delete(cat);
       } else {
@@ -426,7 +426,7 @@ export default function Playlist() {
                 >
                   <div className="flex items-center gap-3">
                     <span className="text-base font-semibold text-neutral-900 dark:text-white">{cat}</span>
-                    <span className="meta-text">{songs.length} {songs.length === 1 ? 'song' : 'songs'}</span>
+                    <span className="meta-text">{songs.length} {cat === 'Jackie' ? (songs.length === 1 ? 'speech' : 'speeches') : (songs.length === 1 ? 'song' : 'songs')}</span>
                   </div>
                   <svg
                     className={`w-5 h-5 text-neutral-400 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
@@ -442,7 +442,7 @@ export default function Playlist() {
                   <div className="px-3 pb-3 sm:px-4 sm:pb-4">
                     <div className="grid gap-2.5 sm:gap-3 sm:grid-cols-2 lg:grid-cols-3">
                       {songs.map(seq => {
-                        const cleanDisplayName = seq.displayName.replace(/\s*2025\s*40fps\s*$/i, '').trim();
+                        const cleanDisplayName = cleanSongName(seq.displayName).replace(JACKIE_PREFIX, '');
                         const isRequesting = requestingSeq === seq.name;
                         const isSuccess = successSeq === seq.name;
                         return (
