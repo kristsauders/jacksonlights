@@ -186,8 +186,11 @@ function VoteStandings({ standings }: { standings: VoteRow[] }) {
 
 // The season's headline production: its own set of songs mixed into one long
 // sequence. It gets its own card above the song list instead of sitting in a
-// category, to invite people to watch it all.
-const isFullShow = (s: { displayName?: string }) => /full show/i.test(s.displayName ?? '');
+// category, to invite people to watch it all. Matched loosely because the
+// version on offer changes: "Jackson Lights - Full Show 2026 (...)" or "Jackson
+// Lights - Show from Be With You 2026 (...)". The countdown and speech parts
+// don't have "Show" in their names, so they never match.
+const isFullShow = (s: { displayName?: string }) => /^Jackson Lights - .*\bshow\b/i.test(s.displayName ?? '');
 
 // Preview Night (Sat Nov 14) opens with the full show, and then guests vote
 // on songs. They've just watched it, so leave it off the list through that
@@ -214,7 +217,7 @@ function FeaturedShow({ seq, voting, enabled, votes, requesting, success, onPick
         <div className="flex-1 min-w-0">
           <h3 className="section-title">The Full {year ? `${year} ` : ''}Show 🎄</h3>
           <p className="body-text mt-1.5">
-            Our big {year ? `${year} ` : ''}production: lots of brand-new songs mixed seamlessly together, with a dramatic intro and more.{minutes ? <> It runs about <strong>{minutes} minutes</strong>, so grab a cocoa and stay for the whole thing!</> : ' Grab a cocoa and stay for the whole thing!'}
+            Our big {year ? `${year} ` : ''}production: lots of brand-new songs mixed seamlessly together.{minutes ? <> It runs about <strong>{minutes} minutes</strong>, so grab a cocoa and stay for the whole thing!</> : ' Grab a cocoa and stay for the whole thing!'}
           </p>
           <p className="meta-text mt-1.5">
             Want something shorter? There are lots of other songs to choose from below.
@@ -244,7 +247,13 @@ export default function Playlist() {
   const [requestingSeq, setRequestingSeq] = useState<string | null>(null);
   const [successSeq, setSuccessSeq] = useState<string | null>(null);
 
-  const sequences = (data?.sequences || []) as any[];
+  // Remote Falcon keeps a song it no longer finds in the player's playlist as
+  // "inactive" (e.g. after a file is swapped). Requests for those can't play,
+  // so they're left off the page entirely.
+  const sequences = useMemo(
+    () => ((data?.sequences || []) as any[]).filter(s => s.active !== false),
+    [data?.sequences]
+  );
   const viewerControlEnabled = data?.preferences?.viewerControlEnabled ?? false;
   // Remote Falcon runs the show in one of two modes: JUKEBOX (a request plays
   // next, in order) or VOTING (everyone votes and the leader plays next).
