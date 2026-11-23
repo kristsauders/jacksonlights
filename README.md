@@ -63,6 +63,30 @@ In the App Service: **Networking → Access restrictions**, add a rule allowing
 service tag `AzureFrontDoor.Backend`, matching the header
 `X-Azure-FDID` against your Front Door profile's ID, and deny everything else.
 
+### Purging the Front Door cache after a deploy
+The edge caches HTML and static assets for minutes, so right after a deploy an
+edge can keep serving old HTML that references old (now deleted) JS chunk
+hashes until the TTL expires. Purge the cache once after each deploy.
+
+The purge action is on the Front Door **endpoint** resource —
+`.../profiles/<profile>/purge` and `.../frontDoors/.../purge` both 404:
+
+```bash
+az rest --method POST \
+  --url "https://management.azure.com/subscriptions/<subscription-id>/resourceGroups/<resource-group>/providers/Microsoft.Cdn/profiles/<profile>/afdEndpoints/<endpoint>/purge?api-version=2024-02-01" \
+  --body '{"contentPaths": ["/*"]}'
+```
+
+Notes:
+- `contentPaths` entries must be **relative**: `"/path/*"` for a prefix, or a
+  single resource like `"/index.html"`. Absolute URLs are rejected. Prefer a
+  targeted path when you can; `["/*"]` is a full purge.
+- A purge takes effect within about 10 minutes and accepts up to 100 paths per
+  request. Don't submit another purge until the previous one completes —
+  overlapping requests are rejected.
+- Verify by fetching the site and watching `x-cache` flip from `TCP_HIT` to a
+  revalidate/miss, and that the new JS chunk names are served.
+
 ### Content Security Policy
 Set in `next.config.js`. `script-src` still allows `'unsafe-inline'` because
 next-themes, styled-jsx and the JSON-LD block all emit inline content. Moving
