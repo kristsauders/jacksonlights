@@ -200,15 +200,6 @@ function VoteStandings({ standings }: { standings: VoteRow[] }) {
 // don't have "Show" in their names, so they never match.
 const isFullShow = (s: { displayName?: string }) => /^Jackson Lights - .*\bshow\b/i.test(s.displayName ?? '');
 
-// Preview Night (Sat Nov 14) opens with the full show, and then guests vote
-// on songs. They've just watched it, so leave it off the list through that
-// weekend and bring it back on Monday, Nov 16 (show time, America/New_York).
-const FULL_SHOW_HIDDEN_UNTIL = '2026-11-16';
-function fullShowHidden(): boolean {
-  const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/New_York' }).format(new Date());
-  return today >= '2026-11-14' && today < FULL_SHOW_HIDDEN_UNTIL;
-}
-
 function FeaturedShow({ seq, voting, enabled, votes, requesting, success, onPick }: {
   seq: any; voting: boolean; enabled: boolean; votes?: number;
   requesting: boolean; success: boolean; onPick: () => void;
@@ -293,7 +284,7 @@ export default function Playlist() {
 
   // Evaluated with the data, which only loads in the browser, so the date
   // check never differs between the server render and hydration.
-  const fullShow = useMemo(() => (fullShowHidden() ? undefined : sequences.find(isFullShow)), [sequences]);
+  const fullShow = useMemo(() => sequences.find(isFullShow), [sequences]);
 
   const totalFiltered = Object.values(grouped).reduce((sum, arr) => sum + arr.length, 0);
 

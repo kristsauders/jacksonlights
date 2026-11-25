@@ -16,8 +16,6 @@ function nextShow(): string {
   const now = new Date();
   const day = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/New_York' }).format(now);
   const hour = Number(new Intl.DateTimeFormat('en-US', { timeZone: 'America/New_York', hour: 'numeric', hourCycle: 'h23' }).format(now));
-  if (day < '2026-11-14') return 'Preview Night: Sat, Nov 14 at 7 PM';
-  if (day === '2026-11-14') return hour < 19 ? 'Preview Night: tonight at 7 PM' : 'Starting any minute';
   if (day < '2026-11-27') return 'Opening night: Fri, Nov 27 at 5 PM';
   if (day > '2027-01-01' || (day === '2027-01-01' && hour >= 22)) return 'See you next season!';
   if (hour < 17) return 'Next show: tonight at 5 PM';
