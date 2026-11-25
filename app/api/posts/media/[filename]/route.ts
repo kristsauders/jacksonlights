@@ -63,7 +63,7 @@ export async function GET(
     }
 
     const ext = path.extname(filename).toLowerCase();
-    let fileBuffer = await readFile(filePath);
+    let fileBuffer: Buffer = await readFile(filePath);
     if (['.jpg', '.jpeg', '.png', '.webp'].includes(ext)) {
       try {
         fileBuffer = await normalizePhoto(filename, fileBuffer, ext);
