@@ -64,10 +64,12 @@ function SeasonCopy({ phase }: { phase: 'upcoming' | 'live' }) {
       <p className={EYEBROW}>
         {live ? '2026 Season' : <>Opening night · <time dateTime="2026-11-27"><span className="sm:hidden">Fri, Nov 27</span><span className="hidden sm:inline">Friday, November 27</span></time></>}
       </p>
-      <h2 className={HEADING}>{live ? 'The lights are on! 🎄✨' : 'Thanks for celebrating with us! 🎄✨'}</h2>
+      {/* Not "the lights are on": this shows all day, right above the status
+          card that says when they're actually off. */}
+      <h2 className={HEADING}>{live ? 'The season has started! 🎄✨' : 'Thanks for celebrating with us! 🎄✨'}</h2>
       <p className={BODY}>
         {live
-          ? <>Stop by any night through New Year&apos;s Day. Tune to 87.9 FM and pick the next song below. Free for everyone!</>
+          ? <>The lights are on every night from 5 to 10 PM through New Year&apos;s Day. Tune to 87.9 FM and pick the next song below. Free for everyone!</>
           : <>The nightly shows start the day after Thanksgiving. Bring your family, friends, and neighbors. Free for everyone!</>}
       </p>
     </div>
