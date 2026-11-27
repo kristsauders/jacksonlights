@@ -13,8 +13,8 @@ import gallery from '../../public/gallery.json';
 // preloads it as soon as it reads the document.
 //
 // Kept deliberately short so the tabs are close to the top on a phone: title,
-// one line, the two things people come for (pick a song, get directions) and a
-// small row of radio/stream/address details. The backdrop is always a night
+// one line, the two things people come for (listen along, pick a song) and a
+// small row of radio/address details, where the address opens directions. The backdrop is always a night
 // photo, so the header uses light-on-dark text in both themes.
 
 interface GalleryImage { src: string; alt?: string; }
@@ -53,9 +53,9 @@ function IconRadio() {
   );
 }
 
-function IconHeadphones() {
+function IconHeadphones({ size = 14 }: { size?: number }) {
   return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" width={14} height={14} aria-hidden="true">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" width={size} height={size} aria-hidden="true">
       <path d="M3 18v-6a9 9 0 0 1 18 0v6" />
       <path d="M21 19a2 2 0 0 1-2 2h-1v-6h3zM3 19a2 2 0 0 0 2 2h1v-6H3z" />
     </svg>
@@ -93,24 +93,25 @@ export default function HeroHeader() {
         </p>
 
         <div className="mt-6 sm:mt-8 flex flex-wrap justify-center gap-3">
-          <a href="#songs" className={`${BUTTON} bg-brand-gold text-neutral-950 hover:bg-[#ecd06a] shadow-lg shadow-black/30`}>
+          {/* Listening along is the main thing, so it gets the gold button. */}
+          <a href="https://player.pulsemesh.io/d/Q8AN" target="_blank" rel="noopener noreferrer" className={`${BUTTON} bg-brand-gold text-neutral-950 hover:bg-[#ecd06a] shadow-lg shadow-black/30`}>
+            <IconHeadphones size={16} />
+            Listen online
+            <span className="sr-only">(opens in a new tab)</span>
+          </a>
+          <a href="#songs" className={`${BUTTON} bg-white/10 text-white ring-1 ring-white/30 hover:bg-white/20 backdrop-blur-sm`}>
             <IconMusic />
             Pick the next song
           </a>
-          <MapLink className={`${BUTTON} bg-white/10 text-white ring-1 ring-white/30 hover:bg-white/20 backdrop-blur-sm`}>
-            <IconMapPin />
-            Get directions
-          </MapLink>
         </div>
 
         <ul className="mt-5 sm:mt-6 flex flex-wrap justify-center gap-x-5 gap-y-1.5 text-[13px] text-white/75">
           <li className={META}><IconRadio /> Tune to <strong className="font-semibold text-white">87.9 FM</strong></li>
           <li>
-            <a href="https://player.pulsemesh.io/d/Q8AN" target="_blank" rel="noopener noreferrer" className={`${META} underline-offset-4 hover:underline hover:text-white focus-ring rounded`}>
-              <IconHeadphones /> Listen online <span aria-hidden="true">↗</span>
-            </a>
+            <MapLink className={`${META} underline underline-offset-4 decoration-white/40 hover:decoration-white hover:text-white focus-ring rounded`}>
+              <IconMapPin size={14} /> 4 Jackson Street · Directions
+            </MapLink>
           </li>
-          <li className={META}><IconMapPin size={14} /> 4 Jackson Street</li>
         </ul>
       </div>
     </header>
